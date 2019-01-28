@@ -17,21 +17,21 @@ def filter (split_words):
 
     return line
 
-def processProbability(pr, freq, total, ngram):
+def processProbability(pr, freq, total, ngram, vocab):
     if (ngram in freq):
 
-        pr += math.log(freq[ngram]/float(total))
+        pr += math.log(freq[ngram]/float(total+len(vocab)))
 
     return pr
 
 
-def addOne (freq, total, ngram):
+def addOne (freq, total, ngram, vocab):
     if (ngram not in freq):
         total += 1
         freq[ngram] = 1
+        vocab[ngram] = 1
 
-
-    return total, freq
+    return total, freq, vocab
 
 
 def chomp(x):
@@ -51,6 +51,7 @@ def build_LM(in_file):
 
     freq = {"malaysian": {}, "tamil": {}, "indonesian": {}}
     total = {"malaysian": 0, "tamil": 0, "indonesian": 0}
+    vocab = {}
 
     text = file(in_file)
 
@@ -66,14 +67,15 @@ def build_LM(in_file):
         fourGram = nltk.ngrams(line, N_GRAMS)
         for gram in fourGram:
             ngram = ''.join(gram)
+            vocab[ngram] = 1
             if (ngram not in freq[language]):
-                freq[language][ngram] = 2 # add one smoothing
-                total[language] += 2
+                freq[language][ngram] = 1 # add one smoothing
+                total[language] += 1
             else:
                 freq[language][ngram] += 1
                 total[language] += 1
                 
-    return [freq, total]
+    return [freq, total, vocab]
 
 
 
@@ -87,6 +89,7 @@ def test_LM(in_file, out_file, LM):
 
     freq = LM[0]
     total = LM[1]
+    vocab = LM[2]
 
     text = file(in_file)
 
@@ -116,19 +119,19 @@ def test_LM(in_file, out_file, LM):
         for gram in nltk.ngrams(line, N_GRAMS):
             ngram = ''.join(gram)
 
-            total_malaysian, freq_malaysian = addOne(freq_malaysian, total_malaysian, ngram)
-            total_indonesian, freq_indonesian = addOne(freq_indonesian, total_indonesian, ngram)
-            total_tamil, freq_tamil = addOne(freq_tamil, total_tamil, ngram)
+            total_malaysian, freq_malaysian, vocab = addOne(freq_malaysian, total_malaysian, ngram, vocab)
+            total_indonesian, freq_indonesian, vocab = addOne(freq_indonesian, total_indonesian, ngram, vocab)
+            total_tamil, freq_tamil, vocab = addOne(freq_tamil, total_tamil, ngram, vocab)
 
         # Calculate probability after normalising
         for gram in nltk.ngrams(line, N_GRAMS):
             ngram = ''.join(gram)
 
-            pr_malaysian = processProbability(pr_malaysian, freq_malaysian, total_malaysian, ngram)
+            pr_malaysian = processProbability(pr_malaysian, freq_malaysian, total_malaysian, ngram, vocab)
 
-            pr_indonesian = processProbability(pr_indonesian, freq_indonesian, total_indonesian, ngram)
+            pr_indonesian = processProbability(pr_indonesian, freq_indonesian, total_indonesian, ngram, vocab)
 
-            pr_tamil = processProbability(pr_tamil, freq_tamil, total_tamil, ngram)
+            pr_tamil = processProbability(pr_tamil, freq_tamil, total_tamil, ngram, vocab)
 
         prediction = [[pr_malaysian, "malaysian"], [pr_indonesian, "indonesian"], [pr_tamil, "tamil"]]
         prediction.sort(reverse = True)
