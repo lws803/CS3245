@@ -108,7 +108,7 @@ os.listdir() # Get all file names in the specified directory
 
 # Aggregating function arguments
 
-def function (a, **args):
+def function (a, *args):
     print a
     print args
 
