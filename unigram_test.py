@@ -42,12 +42,12 @@ print "=========================="
 
 # Find probability of a text "I Don't Love You" in text_collection_PC
 
-probability = 1.0
 
 # Add one smoothing before querying
-for word in "I Don't Love You Now".split():
 
-    # TODO: Find out of it is better if we don't increment it to both the vocab and total_text_collection_PC_freq instead
+query = "I Remember You"
+
+for word in query.split():
     vocab[word] = 1
 
     if (word not in text_collection_PC_freq):
@@ -55,11 +55,33 @@ for word in "I Don't Love You Now".split():
         total_text_collection_PC_freq += 1
 
 
-print "Total for PC (NEW), including total vocab size: ", (total_text_collection_PC_freq + len(vocab))
+for word in query.split():
+    vocab[word] = 1
 
-for word in "I Don't Love You".split():
-    probability *= text_collection_PC_freq[word]/float(total_text_collection_PC_freq + len(vocab))
+    if (word not in text_collection_AS_freq):
+        text_collection_AS_freq[word] = 1
+        total_text_collection_AS_freq += 1
 
-print (probability)
+
+
+# print "Total for PC (NEW), including total vocab size: ", (total_text_collection_PC_freq + len(vocab))
+
+probability_AS = 1.0
+probability_PC = 1.0
+
+
+for word in query.split():
+    probability_PC *= text_collection_PC_freq[word]/float(total_text_collection_PC_freq + len(vocab))
+
+for word in query.split():
+    probability_AS *= text_collection_AS_freq[word]/float(total_text_collection_AS_freq + len(vocab))
+
+
+if (probability_PC > probability_AS):
+    print "This title is from Air Supply"
+else:
+    print "This title is from Phil Collins"
+
+
 
 

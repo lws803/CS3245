@@ -43,12 +43,29 @@ print "=========================="
 
 
 probability = 1.0
-query = "<START> Here I Am<END>"
+
+# Add one smoothing for the query
+query = "<START> I Remember You <END>"
+
 for ngram in nltk.ngrams(query.split(), NGRAM):
     combined_string = ngram[0] + " " + ngram[1]
-    if (combined_string in vocab and combined_string in text_collection_AS):
+    if (combined_string in vocab and combined_string in text_collection_AS_freq):
+        pass
+    else:
+        # Add one smoothing
+        text_collection_AS_freq[combined_string] = 1
+        vocab[combined_string] = 1
+        total_text_collection_AS_freq += 1
+
+
+for ngram in nltk.ngrams(query.split(), NGRAM):
+    combined_string = ngram[0] + " " + ngram[1]
+    if (combined_string in vocab and combined_string in text_collection_AS_freq):
         probability *= text_collection_AS_freq[combined_string]/float(total_text_collection_AS_freq + len(vocab))
     else:
-        print ("Ngram not found")
+        print "Ngram not in vocab"
+        break
+
+
 print probability
 
