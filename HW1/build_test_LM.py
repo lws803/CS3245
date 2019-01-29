@@ -115,8 +115,6 @@ def test_LM(in_file, out_file, LM):
         freq_indonesian = freq["indonesian"]
         freq_tamil = freq["tamil"]
 
-        # TODO: Add a boolean to check if there is really no hit at all. If not hit at all then just call it as others
-
         # Add one smoothing first
         for gram in nltk.ngrams(line, N_GRAMS):
             ngram = ''.join(gram)
