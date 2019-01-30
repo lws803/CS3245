@@ -7,16 +7,7 @@ import math
 
 N_GRAMS = 4
 
-def filter (split_words):
-    line = ""
-    # Filter and append
-    for word in split_words:
-        if (word.isalpha()):
-            line += word.lower()
-            line += " "
-
-    return line
-
+# Processes probability if the ngram exists in the freq table
 def processProbability(pr, freq, total, ngram, vocab):
     if (ngram in freq):
 
@@ -24,29 +15,28 @@ def processProbability(pr, freq, total, ngram, vocab):
 
     return pr
 
-
+# Performs add one smoothing to the freq table and vocab for the queries
 def addOne (freq, total, ngram, vocab):
+    vocab[ngram] = 1
+    
     if (ngram not in freq):
         total += 1
         freq[ngram] = 1
-        vocab[ngram] = 1
+    else:
+        total += 1
+        freq[ngram] += 1
 
     return total, freq, vocab
 
 
+# Removes new line
 def chomp(x):
     if x.endswith("\r\n"): return x[:-2]
     if x.endswith("\n") or x.endswith("\r"): return x[:-1]
     return x
 
-# TODO: Refactor and create a giant vocab space
-
 
 def build_LM(in_file):
-    """
-    build language models for each label
-    each line in in_file contains a label and a string separated by a space
-    """
     print 'building language models...'
 
     freq = {"malaysian": {}, "tamil": {}, "indonesian": {}}
@@ -56,7 +46,7 @@ def build_LM(in_file):
     text = file(in_file)
 
     for line in text:
-        # print line
+
         split_words = nltk.word_tokenize(line)
         language = split_words[0]
 
@@ -80,11 +70,6 @@ def build_LM(in_file):
 
 
 def test_LM(in_file, out_file, LM):
-    """
-    test the language models on new strings
-    each line of in_file contains a string
-    you should print the most probable label for each string into out_file
-    """
     print "testing language models..."
 
     freq = LM[0]
@@ -108,6 +93,7 @@ def test_LM(in_file, out_file, LM):
         pr_indonesian = 0
         pr_tamil = 0
 
+        # For each line, we wish to reset the current frequency table (removing smoothing from prev queries)
         total_malaysian = total["malaysian"]
         total_indonesian = total["indonesian"]
         total_tamil = total["tamil"]
@@ -128,9 +114,7 @@ def test_LM(in_file, out_file, LM):
             ngram = ''.join(gram)
 
             pr_malaysian = processProbability(pr_malaysian, freq_malaysian, total_malaysian, ngram, vocab)
-
             pr_indonesian = processProbability(pr_indonesian, freq_indonesian, total_indonesian, ngram, vocab)
-
             pr_tamil = processProbability(pr_tamil, freq_tamil, total_tamil, ngram, vocab)
 
         prediction = [[pr_malaysian, "malaysian"], [pr_indonesian, "indonesian"], [pr_tamil, "tamil"]]
