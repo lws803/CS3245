@@ -4,6 +4,7 @@ import nltk
 import sys
 import getopt
 import math
+import numpy as np
 
 N_GRAMS = 4
 
@@ -34,6 +35,14 @@ def chomp(x):
     if x.endswith("\r\n"): return x[:-2]
     if x.endswith("\n") or x.endswith("\r"): return x[:-1]
     return x
+
+# log sum exp trick
+def logSumExp(ns):
+    max = np.max(ns)
+    ds = ns - max
+    sumOfExp = np.exp(ds).sum()
+    return max + np.log(sumOfExp)
+
 
 
 def build_LM(in_file):
@@ -121,8 +130,22 @@ def test_LM(in_file, out_file, LM):
         prediction.sort(reverse = True)
         # print prediction[0][1], " ", actual[count], " ", prediction[0][0]
         # print prediction[0][1]
+
+        log_probabilities = []
+        for x in prediction:
+            log_probabilities.append(x[0] + math.log(1.0/3))
+
+        total_sum = logSumExp(log_probabilities)
+
+        bayes_probability = math.exp(prediction[0][0] + math.log(1.0/3) - total_sum)
+
+        output_line = ""
+        if (bayes_probability >= 0.9):
+            output_line = prediction[0][1] + " " + line_original
+        else:
+            output_line = "other" + " " + line_original
+
         count += 1
-        output_line = prediction[0][1] + " " + line_original
         out_file.write(output_line)
 
 
