@@ -60,10 +60,12 @@ def build_LM(in_file):
         split_words = nltk.word_tokenize(line)
         language = split_words[0]
 
+        # Removal of newline and addition of padding
         line = chomp(line)
         line = "___" + line
         line = line + "___"
 
+        # Generate four gram and storing in general vocab + frequency table of that language
         fourGram = nltk.ngrams(line, N_GRAMS)
         for gram in fourGram:
             ngram = ''.join(gram)
@@ -84,13 +86,13 @@ def test_LM(in_file, out_file, LM):
 
     freq = LM[0]
     total = LM[1]
-    vocab = LM[2]
 
     text = file(in_file)
 
     for line in text:
         line_original = line[:]
 
+        # Removal of newline and addition of padding
         line = chomp(line)
         line = "___" + line
         line += "___"
@@ -99,15 +101,16 @@ def test_LM(in_file, out_file, LM):
         pr_indonesian = 0
         pr_tamil = 0
 
-        # For each line, we wish to reset the current frequency table (removing smoothing from prev queries)
+        # For each query, we wish to reset the current frequency table and vocab (remove smoothing from prev queries)
         total_malaysian = total["malaysian"]
         total_indonesian = total["indonesian"]
         total_tamil = total["tamil"]
         freq_malaysian = freq["malaysian"]
         freq_indonesian = freq["indonesian"]
         freq_tamil = freq["tamil"]
+        vocab = LM[2]
 
-        # Add one smoothing first
+        # Add one smoothing first for this particular query
         for gram in nltk.ngrams(line, N_GRAMS):
             ngram = ''.join(gram)
 
@@ -115,7 +118,7 @@ def test_LM(in_file, out_file, LM):
             total_indonesian, freq_indonesian, vocab = addOne(freq_indonesian, total_indonesian, ngram, vocab)
             total_tamil, freq_tamil, vocab = addOne(freq_tamil, total_tamil, ngram, vocab)
 
-        # Calculate probability after normalising
+        # Calculate probability after smoothing
         for gram in nltk.ngrams(line, N_GRAMS):
             ngram = ''.join(gram)
 
@@ -126,7 +129,7 @@ def test_LM(in_file, out_file, LM):
         prediction = [[pr_malaysian, "malaysian"], [pr_indonesian, "indonesian"], [pr_tamil, "tamil"]]
         prediction.sort(reverse = True)
 
-
+        # Finding PR(LM|4-gram) after performing baye's theorem
         log_probabilities = []
         for x in prediction:
             log_probabilities.append(x[0] + math.log(1.0/3))
