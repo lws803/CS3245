@@ -88,10 +88,6 @@ def test_LM(in_file, out_file, LM):
 
     text = file(in_file)
 
-    count = 0
-    actual = ["malaysian", "tamil", "indonesian", "other", "indonesian", "malaysian", "tamil", "tamil", 
-        "tamil", "indonesian", "other", "indonesian", "malaysian", "malaysian", "indonesian", "malaysian", "indonesian", "tamil", "malaysian", "indonesian"]
-
     for line in text:
         line_original = line[:]
 
@@ -129,8 +125,7 @@ def test_LM(in_file, out_file, LM):
 
         prediction = [[pr_malaysian, "malaysian"], [pr_indonesian, "indonesian"], [pr_tamil, "tamil"]]
         prediction.sort(reverse = True)
-        # print prediction[0][1], " ", actual[count], " ", prediction[0][0]
-        # print prediction[0][1]
+
 
         log_probabilities = []
         for x in prediction:
@@ -146,7 +141,6 @@ def test_LM(in_file, out_file, LM):
         else:
             output_line = "other" + " " + line_original
 
-        count += 1
         out_file.write(output_line)
 
 
