@@ -7,6 +7,7 @@ import math
 import numpy as np
 
 N_GRAMS = 4
+THRESHOLD = 0.9
 
 # Processes probability if the ngram exists in the freq table
 def processProbability(pr, freq, total, ngram, vocab):
@@ -140,7 +141,7 @@ def test_LM(in_file, out_file, LM):
         bayes_probability = math.exp(prediction[0][0] + math.log(1.0/3) - total_sum)
 
         output_line = ""
-        if (bayes_probability >= 0.9):
+        if (bayes_probability >= THRESHOLD):
             output_line = prediction[0][1] + " " + line_original
         else:
             output_line = "other" + " " + line_original
@@ -176,9 +177,3 @@ LM = build_LM(input_file_b)
 with open(output_file, 'a') as f:
     test_LM(input_file_t, f, LM)
     f.close()
-
-
-# Note:
-# Use log addition for the probabilities instead, follow instructions here: 
-# http://practicalcryptography.com/miscellaneous/machine-learning/tutorial-automatic-language-identification-ngram-b/
-
