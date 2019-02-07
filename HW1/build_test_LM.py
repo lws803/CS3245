@@ -7,7 +7,6 @@ import math
 import numpy as np
 
 N_GRAMS = 4
-THRESHOLD = 0.9
 
 # Processes probability if the ngram exists in the freq table
 def processProbability(pr, freq, total, ngram, vocab):
@@ -30,6 +29,15 @@ def addOne (freq, total, ngram, vocab):
 
     return total, freq, vocab
 
+# Count the number of misses (ngrams not in vocab)
+def countMisses (ngram, vocab):
+    misses = 0
+    hits = 0
+    if (ngram not in vocab):
+        misses += 1
+    else:
+        hits += 1
+    return hits, misses
 
 # Removes new line
 def chomp(x):
@@ -110,9 +118,16 @@ def test_LM(in_file, out_file, LM):
         freq_tamil = freq["tamil"]
         vocab = LM[2]
 
+        hits = 0
+        misses = 0
+        
         # Add one smoothing first for this particular query
         for gram in nltk.ngrams(line, N_GRAMS):
             ngram = ''.join(gram)
+
+            hits_, misses_ = countMisses(ngram, vocab)
+            hits += hits_
+            misses += misses_
 
             total_malaysian, freq_malaysian, vocab = addOne(freq_malaysian, total_malaysian, ngram, vocab)
             total_indonesian, freq_indonesian, vocab = addOne(freq_indonesian, total_indonesian, ngram, vocab)
@@ -129,17 +144,8 @@ def test_LM(in_file, out_file, LM):
         prediction = [[pr_malaysian, "malaysian"], [pr_indonesian, "indonesian"], [pr_tamil, "tamil"]]
         prediction.sort(reverse = True)
 
-        # Finding PR(LM|4-gram) after performing baye's theorem
-        log_probabilities = []
-        for x in prediction:
-            log_probabilities.append(x[0] + math.log(1.0/3))
-
-        total_sum = logSumExp(log_probabilities)
-
-        bayes_probability = math.exp(prediction[0][0] + math.log(1.0/3) - total_sum)
-
         output_line = ""
-        if (bayes_probability >= THRESHOLD):
+        if (hits/float(misses) >= 1):
             output_line = prediction[0][1] + " " + line_original
         else:
             output_line = "other" + " " + line_original
