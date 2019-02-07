@@ -133,25 +133,25 @@ def test_LM(in_file, out_file, LM):
             total_indonesian, freq_indonesian, vocab = addOne(freq_indonesian, total_indonesian, ngram, vocab)
             total_tamil, freq_tamil, vocab = addOne(freq_tamil, total_tamil, ngram, vocab)
 
-        # Calculate probability after smoothing
-        for gram in nltk.ngrams(line, N_GRAMS):
-            ngram = ''.join(gram)
-
-            pr_malaysian = processProbability(pr_malaysian, freq_malaysian, total_malaysian, ngram, vocab)
-            pr_indonesian = processProbability(pr_indonesian, freq_indonesian, total_indonesian, ngram, vocab)
-            pr_tamil = processProbability(pr_tamil, freq_tamil, total_tamil, ngram, vocab)
-
-        prediction = [[pr_malaysian, "malaysian"], [pr_indonesian, "indonesian"], [pr_tamil, "tamil"]]
-        prediction.sort(reverse = True)
-
         output_line = ""
-        if (hits/float(misses) >= 1):
-            output_line = prediction[0][1] + " " + line_original
-        else:
+
+        if (hits/float(misses) < 1):
             output_line = "other" + " " + line_original
+        else:
+            # Calculate probability after smoothing
+            for gram in nltk.ngrams(line, N_GRAMS):
+                ngram = ''.join(gram)
+
+                pr_malaysian = processProbability(pr_malaysian, freq_malaysian, total_malaysian, ngram, vocab)
+                pr_indonesian = processProbability(pr_indonesian, freq_indonesian, total_indonesian, ngram, vocab)
+                pr_tamil = processProbability(pr_tamil, freq_tamil, total_tamil, ngram, vocab)
+
+            prediction = [[pr_malaysian, "malaysian"], [pr_indonesian, "indonesian"], [pr_tamil, "tamil"]]
+            prediction.sort(reverse = True)
+
+            output_line = prediction[0][1] + " " + line_original
 
         out_file.write(output_line)
-
 
 
 def usage():
