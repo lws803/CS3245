@@ -33,6 +33,7 @@ Initially I wanted to use the probabilities generated PR(4-gram|language_model),
 can not be depended as they cannot be compared among different queries. Hence a specific threshold could not be used.
 It was eventually revamped and now using baye's theorem to find PR(language_model|4-gram) before deciding.
 
+Eventually, I've turned to using a simple method to find out the ratio between hits vs misses and if there are more misses than hits in the general vocab, the language is considered "other".
 
 == Files included with this submission ==
 
