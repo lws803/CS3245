@@ -45,14 +45,6 @@ def chomp(x):
     if x.endswith("\n") or x.endswith("\r"): return x[:-1]
     return x
 
-# log sum exp trick
-def logSumExp(ns):
-    max = np.max(ns)
-    ds = ns - max
-    sumOfExp = np.exp(ds).sum()
-    return max + np.log(sumOfExp)
-
-
 
 def build_LM(in_file):
     print 'building language models...'
@@ -119,7 +111,7 @@ def test_LM(in_file, out_file, LM):
         vocab = LM[2]
 
         hits = 0
-        misses = 0
+        misses = 1 # Intialised to 1 to prevent divide by zero
         
         # Add one smoothing first for this particular query
         for gram in nltk.ngrams(line, N_GRAMS):
