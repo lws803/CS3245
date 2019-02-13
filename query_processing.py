@@ -10,7 +10,7 @@ queue = []
 operators = {"NOT": 3, "AND": 4, "OR": 5}
 
 
-# Shuting yard algorithm
+# Shunting yard algorithm
 for token in nltk.word_tokenize(query4):
     # print token
     if (token == "("):
