@@ -5,7 +5,9 @@ No. The probability of finding an exact word match is much harder as compared to
 
 ### What do you think will happen if we provided more data for each category for you to build the language models? What if we only provided more data for Indonesian?
 
-Indonesian texts will have a higher prediction accuracy whereas the rest could potentially be mislabeled as indonesian as well given that the indonesian frequency table has a higher count.
+Might not be affected as the total count for Indonesian language model will also increase. Since we are finding the probability of current 4-gram among the entire language model, the probability changes will be negligible.
+
+
 
 ### What do you think will happen if you strip out punctuations and/or numbers? What about converting upper case characters to lower case?
 
