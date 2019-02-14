@@ -74,4 +74,3 @@ if __name__ == "__main__":
     #     print myList.getSkipIndex(i)
 
     print (myList.find(5, 0))
-
