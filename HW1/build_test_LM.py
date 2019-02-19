@@ -11,23 +11,24 @@ N_GRAMS = 4
 # Processes probability if the ngram exists in the freq table
 def processProbability(pr, freq, total, ngram, vocab):
     if (ngram in freq):
-
-        pr += math.log(freq[ngram]/float(total+len(vocab)))
-
+        pr += math.log(freq[ngram] + 1) - math.log(total+len(vocab))
+    elif (ngram in vocab):
+        pr += math.log(1) - math.log(total+len(vocab))
     return pr
 
-# Performs add one smoothing to the freq table and vocab for the queries
-def addOne (freq, total, ngram, vocab):
-    vocab[ngram] = 1
-    
-    if (ngram not in freq):
-        total += 1
-        freq[ngram] = 1
-    else:
-        total += 1
-        freq[ngram] += 1
 
-    return total, freq, vocab
+# Performs add one smoothing to the freq table and vocab for the queries - redundant
+# def addOne (freq, total, ngram, vocab):
+#     vocab[ngram] = 1
+    
+#     if (ngram not in freq):
+#         total += 1
+#         freq[ngram] = 1
+#     else:
+#         total += 1
+#         freq[ngram] += 1
+
+#     return total, freq, vocab
 
 # Count the number of misses (ngrams not in vocab)
 def countMisses (ngram, vocab):
@@ -121,9 +122,10 @@ def test_LM(in_file, out_file, LM):
             hits += hits_
             misses += misses_
 
-            total_malaysian, freq_malaysian, vocab = addOne(freq_malaysian, total_malaysian, ngram, vocab)
-            total_indonesian, freq_indonesian, vocab = addOne(freq_indonesian, total_indonesian, ngram, vocab)
-            total_tamil, freq_tamil, vocab = addOne(freq_tamil, total_tamil, ngram, vocab)
+            # Deprecated
+            # total_malaysian, freq_malaysian, vocab = addOne(freq_malaysian, total_malaysian, ngram, vocab)
+            # total_indonesian, freq_indonesian, vocab = addOne(freq_indonesian, total_indonesian, ngram, vocab)
+            # total_tamil, freq_tamil, vocab = addOne(freq_tamil, total_tamil, ngram, vocab)
 
         output_line = ""
 
