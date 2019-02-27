@@ -8,6 +8,9 @@ import getopt
 
 from nltk.stem.porter import *
 
+def encoder(decimal):
+    return hex(decimal)[2:].zfill(4)
+
 stemmer = PorterStemmer()
 
 def usage():
@@ -39,7 +42,7 @@ index = {}
 dictionary_data = open(output_file_dictionary, 'w')
 postings_data = open(output_file_postings, 'w')
 
-count = 0;
+count = 0
 for filename in os.listdir(input_directory):
     f = open(input_directory + "/" + filename, 'r')
     whole_text = f.read()
@@ -71,7 +74,8 @@ for key in sorted_keys:
     dictionary_data.write(key + '\n')
 
     for doc_id in index[key]:
-        postings_data.write(str(doc_id) + ",")
+        hex_val = encoder(doc_id)
+        postings_data.write(str(hex_val) + ",")
     postings_data.write('\n')
 
 dictionary_data.close()
