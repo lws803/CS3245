@@ -6,7 +6,6 @@ import os
 import sys
 import getopt
 import math
-
 from nltk.stem.porter import PorterStemmer
 
 FIXED_WIDTH = 4
