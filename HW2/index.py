@@ -8,6 +8,7 @@ import getopt
 import math
 import struct
 from nltk.stem.porter import PorterStemmer
+import codecs
 
 FIXED_WIDTH = 4
 
@@ -47,7 +48,9 @@ postings_data = open(output_file_postings, 'wb')
 
 count = 0
 for filename in os.listdir(input_directory):
-    f = open(input_directory + "/" + filename, 'r')
+    # f = open(input_directory + "/" + filename, 'r')
+    f = codecs.open(input_directory + "/" + filename, encoding='utf-8')
+
     whole_text = f.read()
     
     lines = nltk.sent_tokenize(whole_text)
