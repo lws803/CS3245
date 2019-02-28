@@ -20,14 +20,13 @@ class Node:
     def getSkip(self):
         return self.skip_index
 
-
 def shunting_yard(query):
     stack = []
     queue = []
 
-    # Shunting yard algorithm
+    # Shunting yard algorithm to generate a postfix expression to execute
     for token in nltk.word_tokenize(query):
-        # print token
+
         if (token == "("):
             stack.append(token)
         elif (token == ")"):
@@ -35,6 +34,7 @@ def shunting_yard(query):
                 queue.append(stack.pop())
             stack.pop()
 
+        # Operator
         elif (token in operators):
             if (len(stack) != 0 and stack[-1] != "(" and operators[stack[-1]] >= operators[token]):
                 queue.append(token)
@@ -54,7 +54,6 @@ def shunting_yard(query):
     return queue
 
 def and_operation(right_list, left_list):
-
     common_docs = []
 
     right_pos = 0
@@ -79,11 +78,9 @@ def and_operation(right_list, left_list):
             right_pos += 1
             left_pos += 1
     
-    
     return generate_skip_list(common_docs)
 
 def and_not_operation(right_list, left_list):
-
     resulting_docs = []
 
     right_pos = 0
@@ -164,8 +161,6 @@ def generate_skip_list (data=[]):
             skip_list.append(Node(index, None))
     return skip_list
 
-
-
 def retriever (token):
     if (token not in terms):
         return []
@@ -185,7 +180,6 @@ def retriever (token):
         unpacked_skip = struct.unpack('I', os.read(postings, BYTE_WIDTH))[0]
 
     return skip_list
-
 
 def encoder(integer):
     return struct.pack('I', integer)
@@ -217,18 +211,21 @@ if dictionary_file == None or postings_file == None or file_of_queries == None o
     usage()
     sys.exit(2)
 
-
 queries = open(file_of_queries, 'r')
-dictionary = open (dictionary_file, 'r')
+dictionary = open(dictionary_file, 'r')
+output = open(file_of_output, 'w')
 postings = os.open(postings_file, os.O_RDONLY)
-lines = dictionary.readlines()
+
 terms = {}
-operators = {"AND": 4, "OR": 3}
 universe = {}
+
+operators = {"AND": 4, "OR": 3}
 
 if __name__ == "__main__":
     # Store terms in memory with their frequencies and starting byte offsets
     firstLine = True
+    lines = dictionary.readlines()
+
     for line in lines:
         if (firstLine):
             for ids in line.split(','):
@@ -245,9 +242,6 @@ if __name__ == "__main__":
     # TODO: Process the queries similar to how its being processed in index.py
     for line in lines:
         postfix_expression = shunting_yard(line)
-        print (postfix_expression)
-        print ("Executing new query now")
-
         processing_stack = []
         
         for token in postfix_expression:
@@ -277,6 +271,9 @@ if __name__ == "__main__":
                 processing_stack.append("NOT")
         
         for node in processing_stack[-1]:
-            print (node.getValue())
+            output.write(str(node.getValue()) + ' ')
+        output.write('\n\n')
 
-    #print(shunting_yard(line))
+    queries.close()
+    dictionary.close()
+    output.close()
