@@ -13,7 +13,7 @@ operators = {"NOT": 5, "AND": 4, "OR": 3}
 # TODO: Find a way to deal with AND NOT/ OR NOT
 
 # Shunting yard algorithm
-for token in nltk.word_tokenize(query4):
+for token in nltk.word_tokenize(query3):
     # print token
     if (token == "("):
         stack.append(token)

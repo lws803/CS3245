@@ -6,12 +6,13 @@ import os
 import sys
 import getopt
 import math
+import struct
 from nltk.stem.porter import PorterStemmer
 
 FIXED_WIDTH = 4
 
-def encoder(decimal):
-    return hex(decimal)[2:].zfill(FIXED_WIDTH)
+def encoder(integer):
+    return struct.pack('I', integer)
 
 stemmer = PorterStemmer()
 
@@ -42,7 +43,7 @@ if input_directory == None or output_file_postings == None or output_file_dictio
 
 index = {}
 dictionary_data = open(output_file_dictionary, 'w')
-postings_data = open(output_file_postings, 'w')
+postings_data = open(output_file_postings, 'wb')
 
 count = 0
 for filename in os.listdir(input_directory):
@@ -70,6 +71,16 @@ for key in index.keys():
     index[key] = sorted(index[key])
 
 sorted_keys = sorted(index.keys())
+docs = {}
+
+for key in sorted_keys:
+    for doc_id in index[key]:
+        docs[doc_id] = True
+
+for key in sorted(docs):
+    dictionary_data.write(str(key) + ", ")
+
+dictionary_data.write("\n")
 
 for key in sorted_keys:
     # Print out to dictionary.txt and postings.txt
@@ -83,19 +94,17 @@ for key in sorted_keys:
     position = -1
     for doc_id in index[key]:
         position += 1
-        hex_val = encoder(doc_id)
         
-        # TODO: Need a function that gives the value of the skip pointer (i.e. how many bytes to skip)
         if position == len(index[key]) - 1:
-            # TODO: Recalculate again if we need these many hexes (technically only need 4)
-            postings_data.write(str(hex_val) + "ffff")
+            postings_data.write(encoder(doc_id))
+            postings_data.write(encoder(65535))
+
         else:
-            postings_data.write(str(hex_val))
-            # TODO: Run through this combinational logic again and make sure its right
+            postings_data.write(encoder(doc_id))
             if (skip_spaces >= 2 and not(position%skip_spaces) and position+skip_spaces < len(index[key])):
-                postings_data.write(str(encoder(position+skip_spaces)))
+                postings_data.write(encoder(position+skip_spaces))
             else:
-                postings_data.write("0000")
+                postings_data.write(encoder(0))
 
 dictionary_data.close()
 postings_data.close()
