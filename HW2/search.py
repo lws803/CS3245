@@ -37,7 +37,8 @@ def shunting_yard(query):
 
         elif (token in operators):
             if (len(stack) != 0 and stack[-1] != "(" and operators[stack[-1]] >= operators[token]):
-                queue.append(token)
+                queue.append(stack.pop())
+                stack.append(token)
             else:
                 stack.append(token)
         
@@ -183,7 +184,8 @@ def retriever (token):
 
         unpacked_value = struct.unpack('I', os.read(postings, BYTE_WIDTH))[0]
         unpacked_skip = struct.unpack('I', os.read(postings, BYTE_WIDTH))[0]
-
+    
+    skip_list.append(Node(unpacked_value, None))
     return skip_list
 
 
