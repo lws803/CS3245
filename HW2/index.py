@@ -1,4 +1,5 @@
 #!/usr/bin/python
+import codecs
 import collections
 import re
 import nltk
@@ -8,14 +9,12 @@ import getopt
 import math
 import struct
 from nltk.stem.porter import PorterStemmer
-import codecs
 
 FIXED_WIDTH = 4
+stemmer = PorterStemmer()
 
 def encoder(integer):
     return struct.pack('I', integer)
-
-stemmer = PorterStemmer()
 
 def usage():
     print ("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
@@ -48,7 +47,6 @@ postings_data = open(output_file_postings, 'wb')
 
 count = 0
 for filename in os.listdir(input_directory):
-    # f = open(input_directory + "/" + filename, 'r')
     f = codecs.open(input_directory + "/" + filename, encoding='utf-8')
 
     whole_text = f.read()
@@ -68,7 +66,6 @@ for filename in os.listdir(input_directory):
                     index[word] = {int(filename)}
     count += 1
     # if (count >= 10): break
-
 
 for key in index.keys():
     index[key] = sorted(index[key])
