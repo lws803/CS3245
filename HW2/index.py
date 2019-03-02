@@ -94,6 +94,5 @@ for key in sorted_keys:
     for doc_id in index[key]:
         position += 1
         postings_data.write(encoder(doc_id))
-        
 dictionary_data.close()
 postings_data.close()
