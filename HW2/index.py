@@ -97,17 +97,18 @@ for key in sorted_keys:
     position = -1
     for doc_id in index[key]:
         position += 1
+        postings_data.write(encoder(doc_id))
         
-        if position == len(index[key]) - 1:
-            postings_data.write(encoder(doc_id))
-            postings_data.write(encoder(65535))
+        # if position == len(index[key]) - 1:
+        #     postings_data.write(encoder(doc_id))
+        #     postings_data.write(encoder(65535))
 
-        else:
-            postings_data.write(encoder(doc_id))
-            if (skip_spaces >= 2 and not(position%skip_spaces) and position+skip_spaces < len(index[key])):
-                postings_data.write(encoder(position+skip_spaces))
-            else:
-                postings_data.write(encoder(0))
+        # else:
+        #     postings_data.write(encoder(doc_id))
+        #     if (skip_spaces >= 2 and not(position%skip_spaces) and position+skip_spaces < len(index[key])):
+        #         postings_data.write(encoder(position+skip_spaces))
+        #     else:
+        #         postings_data.write(encoder(0))
 
 dictionary_data.close()
 postings_data.close()

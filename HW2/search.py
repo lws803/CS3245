@@ -171,21 +171,19 @@ def retriever (token):
     if (token not in terms):
         return []
     offset = terms[token][1]
-    os.lseek(postings, offset, 0)
-    unpacked_value = struct.unpack('I', os.read(postings, BYTE_WIDTH))[0]
-    unpacked_skip = struct.unpack('I', os.read(postings, BYTE_WIDTH))[0]
-    skip_list = []
-    while (unpacked_skip != 65535):
-        skip = None
-        if (unpacked_skip != 0):
-            skip = unpacked_skip
+    size = terms[token][0]
+    skips = math.sqrt(size)
+    skip_spaces = int(skips)
 
+    os.lseek(postings, offset, 0)
+    skip_list = []
+    for i in range(0, size):
+        skip = None
+        unpacked_value = struct.unpack('I', os.read(postings, BYTE_WIDTH))[0]
+        if (skip_spaces >= 2 and not(i%skip_spaces) and i+skip_spaces < size):
+            skip = i+skip_spaces
         skip_list.append(Node(unpacked_value, skip))
 
-        unpacked_value = struct.unpack('I', os.read(postings, BYTE_WIDTH))[0]
-        unpacked_skip = struct.unpack('I', os.read(postings, BYTE_WIDTH))[0]
-    
-    skip_list.append(Node(unpacked_value, None))
     return skip_list
 
 
@@ -279,6 +277,6 @@ if __name__ == "__main__":
                 processing_stack.append("NOT")
         
         for node in processing_stack[-1]:
-            print (node.getValue())
+            print (node.getValue(), node.getSkip())
 
     #print(shunting_yard(line))
