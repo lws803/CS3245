@@ -9,6 +9,7 @@ import math
 
 BYTE_WIDTH = 4
 
+# Node class for skip list
 class Node:
     def __init__ (self, value, skip_index=None):
         self.value = value
@@ -20,6 +21,46 @@ class Node:
     def getSkip(self):
         return self.skip_index
 
+def usage():
+    print ("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
+
+dictionary_file = postings_file = file_of_queries = output_file_of_results = None
+	
+try:
+    opts, args = getopt.getopt(sys.argv[1:], 'd:p:q:o:')
+except (getopt.GetoptError):
+    usage()
+    sys.exit(2)
+
+for o, a in opts:
+    if o == '-d':
+        dictionary_file  = a
+    elif o == '-p':
+        postings_file = a
+    elif o == '-q':
+        file_of_queries = a
+    elif o == '-o':
+        file_of_output = a
+    else:
+        assert False, "unhandled option"
+
+if dictionary_file == None or postings_file == None or file_of_queries == None or file_of_output == None :
+    usage()
+    sys.exit(2)
+
+# Global variables
+queries = open(file_of_queries, 'r')
+dictionary = open(dictionary_file, 'r')
+output = open(file_of_output, 'w')
+postings = os.open(postings_file, os.O_RDONLY)
+
+terms = {}
+universe = {}
+
+operators = {"AND": 4, "OR": 3}
+
+
+# Shunting yard algorithm to process infix to postfix
 def shunting_yard(query):
     stack = []
     queue = []
@@ -54,6 +95,7 @@ def shunting_yard(query):
 
     return queue
 
+# Performs merge AND operation between right and left list
 def and_operation(right_list, left_list):
     common_docs = []
 
@@ -80,6 +122,7 @@ def and_operation(right_list, left_list):
             left_pos += 1
     
     return generate_skip_list(common_docs)
+
 
 def and_not_operation(right_list, left_list):
     resulting_docs = []
@@ -147,6 +190,7 @@ def not_operation(list):
 
     return generate_skip_list(sorted(inverse))
 
+# Generates skip list from a given list
 def generate_skip_list (data=[]):
     length = len(data)
     skips = math.sqrt(length)
@@ -162,6 +206,7 @@ def generate_skip_list (data=[]):
             skip_list.append(Node(index, None))
     return skip_list
 
+# Generates skip list from a postings list from file
 def retriever (token):
     if (token not in terms):
         return []
@@ -181,45 +226,6 @@ def retriever (token):
 
     return skip_list
 
-def encoder(integer):
-    return struct.pack('I', integer)
-
-def usage():
-    print ("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
-
-dictionary_file = postings_file = file_of_queries = output_file_of_results = None
-	
-try:
-    opts, args = getopt.getopt(sys.argv[1:], 'd:p:q:o:')
-except (getopt.GetoptError):
-    usage()
-    sys.exit(2)
-
-for o, a in opts:
-    if o == '-d':
-        dictionary_file  = a
-    elif o == '-p':
-        postings_file = a
-    elif o == '-q':
-        file_of_queries = a
-    elif o == '-o':
-        file_of_output = a
-    else:
-        assert False, "unhandled option"
-
-if dictionary_file == None or postings_file == None or file_of_queries == None or file_of_output == None :
-    usage()
-    sys.exit(2)
-
-queries = open(file_of_queries, 'r')
-dictionary = open(dictionary_file, 'r')
-output = open(file_of_output, 'w')
-postings = os.open(postings_file, os.O_RDONLY)
-
-terms = {}
-universe = {}
-
-operators = {"AND": 4, "OR": 3}
 
 if __name__ == "__main__":
     # Store terms in memory with their frequencies and starting byte offsets
@@ -242,7 +248,7 @@ if __name__ == "__main__":
     # TODO: Process the queries similar to how its being processed in index.py
     for line in lines:
         postfix_expression = shunting_yard(line)
-        processing_stack = []
+        processing_stack = [] # stack to process the postfixes
         
         for token in postfix_expression:
             if token not in operators and token != "NOT":
