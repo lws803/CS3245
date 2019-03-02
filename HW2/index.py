@@ -45,7 +45,7 @@ index = {}
 dictionary_data = open(output_file_dictionary, 'w')
 postings_data = open(output_file_postings, 'wb')
 
-count = 0
+# Term processing
 for filename in os.listdir(input_directory):
     f = codecs.open(input_directory + "/" + filename, encoding='utf-8')
 
@@ -64,8 +64,7 @@ for filename in os.listdir(input_directory):
                     index[word].add(int(filename))
                 else:
                     index[word] = {int(filename)}
-    count += 1
-    # if (count >= 10): break
+
 
 for key in index.keys():
     index[key] = sorted(index[key])
