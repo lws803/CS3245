@@ -261,7 +261,6 @@ if __name__ == "__main__":
     # Process each query in the queries file
     lines = queries.readlines()
 
-    # TODO: Process the queries similar to how its being processed in index.py
     for line in lines:
         postfix_expression = shunting_yard(line)
         processing_stack = [] # stack to process the postfixes
