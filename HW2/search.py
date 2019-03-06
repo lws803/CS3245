@@ -211,7 +211,7 @@ def generate_skip_list (data=[]):
             skip_list.append(Node(index, None))
     return skip_list
 
-# Generates skip list from a postings list from file
+# Generates skip list from postings list file
 def retriever (token):
     if (token not in terms): return []
     offset = terms[token][1]
@@ -230,6 +230,7 @@ def retriever (token):
 
     return skip_list
 
+# Normalize user search query terms
 def normalize (token):
     token = token.lower() # Perform case folding on the current term
 
@@ -294,7 +295,7 @@ if __name__ == "__main__":
         
         for node in processing_stack[-1]:
             output.write(str(node.getValue()) + ' ')
-        output.write('\n\n')
+        output.write('\n')
 
     queries.close()
     dictionary.close()
