@@ -6,6 +6,9 @@ import getopt
 import os
 import struct
 import math
+import string
+
+from nltk.stem.porter import PorterStemmer
 
 BYTE_WIDTH = 4
 
@@ -49,16 +52,18 @@ if dictionary_file == None or postings_file == None or file_of_queries == None o
     sys.exit(2)
 
 # Global variables
-queries = open(file_of_queries, 'r')
 dictionary = open(dictionary_file, 'r')
 output = open(file_of_output, 'w')
 postings = os.open(postings_file, os.O_RDONLY)
+queries = open(file_of_queries, 'r')
 
+operators = {"AND": 4, "OR": 3}
+stemmer = PorterStemmer()
 terms = {}
 universe = {}
 
-operators = {"AND": 4, "OR": 3}
-
+IGNORE_PUNCTUATION = True # Adding an option to strip away all punctuation in a term
+PERFORM_STEMMING = True # Adding an option to perform stemming on the current term
 
 # Shunting yard algorithm to process infix to postfix
 def shunting_yard(query):
@@ -208,8 +213,7 @@ def generate_skip_list (data=[]):
 
 # Generates skip list from a postings list from file
 def retriever (token):
-    if (token not in terms):
-        return []
+    if (token not in terms): return []
     offset = terms[token][1]
     size = terms[token][0]
     skips = math.sqrt(size)
@@ -226,6 +230,17 @@ def retriever (token):
 
     return skip_list
 
+def normalize (token):
+    token = token.lower() # Perform case folding on the current term
+
+   # Remove all instances of punctuation if the bool is set to true.
+    if IGNORE_PUNCTUATION: # Remove all instances of punctuation
+        token = token.translate(str.maketrans('','',string.punctuation))
+            
+    # Perform stemming on the term
+    if PERFORM_STEMMING: token = stemmer.stem(token)
+    
+    return token
 
 if __name__ == "__main__":
     # Store terms in memory with their frequencies and starting byte offsets
@@ -252,6 +267,7 @@ if __name__ == "__main__":
         
         for token in postfix_expression:
             if token not in operators and token != "NOT":
+                token = normalize(token) # normalize token as per normalization techniques used in index.py
                 processing_stack.append(retriever(token))
             elif token == "AND":
                 left_list = processing_stack.pop()
