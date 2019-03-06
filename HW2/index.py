@@ -17,10 +17,10 @@ index = {}
 stemmer = PorterStemmer()
 
 FIXED_WIDTH = 4
-IGNORE_NUMBERS = True # Adding an option to ignore any numerical terms
+IGNORE_NUMBERS = False # Adding an option to ignore any numerical terms
 IGNORE_PUNCTUATION = True # Adding an option to strip away all punctuation in a term
 IGNORE_SINGLE_CHARACTER_TERMS = True # Adding an option to ignore single character terms
-IGNORE_STOPWORDS = True # Adding an option to ignore stopwords
+IGNORE_STOPWORDS = False # Adding an option to ignore stopwords
 PERFORM_STEMMING = True # Adding an option to perform stemming on the current term
 
 def add_to_index(lines, filename):
@@ -30,6 +30,7 @@ def add_to_index(lines, filename):
         for term in words:
             term = normalize(term)
             if term is None: continue
+            if term == '': continue
             
             # After performing all normalization methods to the term, add it to the dictionary
             if term in index:
@@ -93,6 +94,7 @@ def write_data(sorted_keys, dictionary_data, postings_data):
     dictionary_data.write("\n")
 
     # Adds all the dictionary terms as well as the postings list to a seperate postings file
+
     for key in sorted_keys:
         # Print out to dictionary.txt and postings.txt
         starting_cursor = postings_data.tell()
