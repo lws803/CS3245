@@ -10,19 +10,10 @@ import string
 
 from nltk.stem.porter import PorterStemmer
 
+# Parameters
 BYTE_WIDTH = 4
-
-# Node class for skip list
-class Node:
-    def __init__ (self, value, skip_index=None):
-        self.value = value
-        self.skip_index = skip_index
-
-    def getValue (self):
-        return self.value
-
-    def getSkip(self):
-        return self.skip_index
+IGNORE_PUNCTUATION = True # Adding an option to strip away all punctuation in a term
+PERFORM_STEMMING = True # Adding an option to perform stemming on the current term
 
 def usage():
     print ("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
@@ -52,18 +43,124 @@ if dictionary_file == None or postings_file == None or file_of_queries == None o
     sys.exit(2)
 
 # Global variables
-dictionary = open(dictionary_file, 'r')
-output = open(file_of_output, 'w')
-postings = os.open(postings_file, os.O_RDONLY)
-queries = open(file_of_queries, 'r')
-
+dictionary = None
+output = None
+postings = None
+queries = None
 operators = {"AND": 4, "OR": 3}
 stemmer = PorterStemmer()
 terms = {}
 universe = {}
 
-IGNORE_PUNCTUATION = True # Adding an option to strip away all punctuation in a term
-PERFORM_STEMMING = True # Adding an option to perform stemming on the current term
+
+# Node class for skip list
+class Node:
+    def __init__ (self, value, skip_index=None):
+        self.value = value
+        self.skip_index = skip_index
+
+    def getValue (self):
+        return self.value
+
+    def getSkip(self):
+        return self.skip_index
+
+# Class of logical functions
+class Logic:
+    # Performs merge AND operation between right and left list
+    def and_operation(right_list, left_list):
+        common_docs = []
+
+        right_pos = 0
+        left_pos = 0
+
+        while (right_pos < len(right_list) and left_pos < len(left_list)):
+            doc_right = right_list[right_pos]
+            doc_left = left_list[left_pos]
+
+            if (doc_right.getValue() < doc_left.getValue()):
+                if (doc_right.getSkip() is not None and right_list[doc_right.getSkip()].getValue() <= doc_left.getValue()):
+                    right_pos = doc_right.getSkip()
+                else:
+                    right_pos += 1
+            elif (doc_right.getValue() > doc_left.getValue()):
+                if (doc_left.getSkip() is not None and left_list[doc_left.getSkip()].getValue() <= doc_right.getValue()):
+                    left_pos = doc_left.getSkip()
+                else:
+                    left_pos += 1
+            elif (doc_right.getValue() == doc_left.getValue()):
+                common_docs.append(doc_right.getValue())
+                right_pos += 1
+                left_pos += 1
+        
+        return generateSkipList(common_docs)
+
+
+    def and_not_operation(right_list, left_list):
+        resulting_docs = []
+
+        right_pos = 0
+        left_pos = 0
+        
+        while (right_pos < len(right_list) and left_pos < len(left_list)):
+            doc_right = right_list[right_pos]
+            doc_left = left_list[left_pos]
+
+            if (doc_right.getValue() == doc_left.getValue()):
+                right_pos += 1
+                left_pos += 1
+            elif (doc_right.getValue() < doc_left.getValue()):
+                resulting_docs.append(doc_right.getValue())
+                right_pos += 1
+            else:
+                if (doc_left.getSkip() is not None and left_list[doc_left.getSkip()].getValue() <= doc_right.getValue()):
+                    left_pos = doc_left.getSkip()
+                else:
+                    left_pos += 1
+        
+        while (right_pos < len(right_list)):
+            doc_right = right_list[right_pos]
+            resulting_docs.append(doc_right.getValue())
+            right_pos += 1
+        
+        return generateSkipList(resulting_docs)
+
+    def or_operation(right_list, left_list):
+        union_set = {}
+
+        right_pos = 0
+        left_pos = 0
+
+        while (right_pos < len(right_list) and left_pos < len(left_list)):
+            doc_right = right_list[right_pos]
+            doc_left = left_list[left_pos]
+
+            union_set[doc_right.getValue()] = True
+            right_pos += 1
+            union_set[doc_left.getValue()] = True
+            left_pos += 1
+
+        while (right_pos < len(right_list)):
+            doc_right = right_list[right_pos]
+
+            union_set[doc_right.getValue()] = True 
+            right_pos += 1
+        
+        while (left_pos < len(left_list)):
+            doc_left = left_list[left_pos]
+
+            union_set[doc_left.getValue()] = True
+            left_pos += 1
+        
+        return generateSkipList(sorted(union_set))
+
+    def not_operation(list, universe):
+        inverse = universe.copy()
+        for items in list:
+            del inverse[items.getValue()]
+
+        return generateSkipList(sorted(inverse))
+
 
 # Shunting yard algorithm to process infix to postfix
 def shunting_yard(query):
@@ -100,103 +197,9 @@ def shunting_yard(query):
 
     return queue
 
-# Performs merge AND operation between right and left list
-def and_operation(right_list, left_list):
-    common_docs = []
-
-    right_pos = 0
-    left_pos = 0
-
-    while (right_pos < len(right_list) and left_pos < len(left_list)):
-        doc_right = right_list[right_pos]
-        doc_left = left_list[left_pos]
-
-        if (doc_right.getValue() < doc_left.getValue()):
-            if (doc_right.getSkip() is not None and right_list[doc_right.getSkip()].getValue() <= doc_left.getValue()):
-                right_pos = doc_right.getSkip()
-            else:
-                right_pos += 1
-        elif (doc_right.getValue() > doc_left.getValue()):
-            if (doc_left.getSkip() is not None and left_list[doc_left.getSkip()].getValue() <= doc_right.getValue()):
-                left_pos = doc_left.getSkip()
-            else:
-                left_pos += 1
-        elif (doc_right.getValue() == doc_left.getValue()):
-            common_docs.append(doc_right.getValue())
-            right_pos += 1
-            left_pos += 1
-    
-    return generate_skip_list(common_docs)
-
-
-def and_not_operation(right_list, left_list):
-    resulting_docs = []
-
-    right_pos = 0
-    left_pos = 0
-    
-    while (right_pos < len(right_list) and left_pos < len(left_list)):
-        doc_right = right_list[right_pos]
-        doc_left = left_list[left_pos]
-
-        if (doc_right.getValue() == doc_left.getValue()):
-            right_pos += 1
-            left_pos += 1
-        elif (doc_right.getValue() < doc_left.getValue()):
-            resulting_docs.append(doc_right.getValue())
-            right_pos += 1
-        else:
-            if (doc_left.getSkip() is not None and left_list[doc_left.getSkip()].getValue() <= doc_right.getValue()):
-                left_pos = doc_left.getSkip()
-            else:
-                left_pos += 1
-    
-    while (right_pos < len(right_list)):
-        doc_right = right_list[right_pos]
-        resulting_docs.append(doc_right.getValue())
-        right_pos += 1
-    
-    return generate_skip_list(resulting_docs)
-
-def or_operation(right_list, left_list):
-    union_set = {}
-
-    right_pos = 0
-    left_pos = 0
-
-    while (right_pos < len(right_list) and left_pos < len(left_list)):
-        doc_right = right_list[right_pos]
-        doc_left = left_list[left_pos]
-
-        union_set[doc_right.getValue()] = True
-        right_pos += 1
-        union_set[doc_left.getValue()] = True
-        left_pos += 1
-
-    while (right_pos < len(right_list)):
-        doc_right = right_list[right_pos]
-
-        union_set[doc_right.getValue()] = True 
-        right_pos += 1
-    
-    while (left_pos < len(left_list)):
-        doc_left = left_list[left_pos]
-
-        union_set[doc_left.getValue()] = True
-        left_pos += 1
-    
-    return generate_skip_list(sorted(union_set))
-
-def not_operation(list):
-    inverse = universe.copy()
-
-    for items in list:
-        del inverse[items.getValue()]
-
-    return generate_skip_list(sorted(inverse))
 
 # Generates skip list from a given list
-def generate_skip_list (data=[]):
+def generateSkipList (data=[]):
     length = len(data)
     skips = math.sqrt(length)
     skip_spaces = int(skips)
@@ -243,11 +246,9 @@ def normalize (token):
     
     return token
 
-if __name__ == "__main__":
-    # Store terms in memory with their frequencies and starting byte offsets
+# Initialise the dictionary and universe set for all documents
+def populateDictionaryAndUniverse (lines):
     firstLine = True
-    lines = dictionary.readlines()
-
     for line in lines:
         if (firstLine):
             for ids in line.split(','):
@@ -258,9 +259,8 @@ if __name__ == "__main__":
         else:
             terms[line.split()[0]] = (int(line.split()[1]), int(line.split()[2]))
 
-    # Process each query in the queries file
-    lines = queries.readlines()
 
+def query (lines):
     for line in lines:
         postfix_expression = shunting_yard(line)
         processing_stack = [] # stack to process the postfixes
@@ -275,9 +275,9 @@ if __name__ == "__main__":
 
                 if (right_list == "NOT"):
                     third_list = processing_stack.pop()
-                    processing_stack.append(and_not_operation(third_list, left_list))
+                    processing_stack.append(Logic.and_not_operation(third_list, left_list))
                 else:
-                    processing_stack.append(and_operation(right_list, left_list))
+                    processing_stack.append(Logic.and_operation(right_list, left_list))
             elif token == "OR":
                 left_list = processing_stack.pop()
                 right_list = processing_stack.pop()
@@ -285,10 +285,10 @@ if __name__ == "__main__":
                 if (right_list == "NOT"):
                     third_list = processing_stack.pop()
 
-                    left_list = not_operation(left_list)
-                    processing_stack.append(or_operation(third_list, left_list))
+                    left_list = Logic.not_operation(left_list, universe)
+                    processing_stack.append(Logic.or_operation(third_list, left_list))
                 else:
-                    processing_stack.append(or_operation(right_list, left_list))
+                    processing_stack.append(Logic.or_operation(right_list, left_list))
             elif token == "NOT":
                 processing_stack.append("NOT")
         
@@ -296,6 +296,20 @@ if __name__ == "__main__":
             output.write(str(node.getValue()) + ' ')
         output.write('\n')
 
+
+if __name__ == "__main__":
+    dictionary = open(dictionary_file, 'r')
+    output = open(file_of_output, 'w')
+    postings = os.open(postings_file, os.O_RDONLY)
+    queries = open(file_of_queries, 'r')
+
+    # Store terms in memory with their frequencies and starting byte offsets
+    populateDictionaryAndUniverse(dictionary.readlines())
+
+    # Process each query in the queries file
+    query(queries.readlines())
+
     queries.close()
     dictionary.close()
     output.close()
+    os.close(postings)
