@@ -27,7 +27,7 @@ of ignoring numbers, stopwords, etc. on the size of the dictionary and postings 
 IGNORE_NUMBERS = False # Adding an option to ignore any numerical terms
 IGNORE_PUNCTUATION = True # Adding an option to strip away all punctuation in a term
 IGNORE_SINGLE_CHARACTER_TERMS = True # Adding an option to ignore single character terms
-IGNORE_STOPWORDS = True # Adding an option to ignore stopwords
+IGNORE_STOPWORDS = False # Adding an option to ignore stopwords
 PERFORM_STEMMING = True # Adding an option to perform stemming on the current term
 
 """

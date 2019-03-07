@@ -105,8 +105,8 @@ Websites:
       implemented in index.py, we calculated the percentage reduction in disk storage using our method
       of number removal using our method of normalization:
 
-      Disk Storage WITHOUT numerical terms: 1,996,444 bytes
-      Disk Storage WITH numerical terms: 2,202,932 bytes
+      Disk Storage of postings.txt WITHOUT numerical terms: 1,996,444 bytes
+      Disk Storage of postings.txt WITH numerical terms: 2,202,932 bytes
 
       Percentage reduction after removing numerical terms: 9.373%
 
@@ -123,9 +123,19 @@ Websites:
       documents, we would also save the trouble of querying such terms which could potentially result 
       in a larger postings list to merge with. Also, the postings and dictionary file will be much 
       smaller as we no longer have to store these stopwords together with their postings lists.
+      
+      Some experimental results to the size of our dictionary and postings list from ignoring stopwords 
 
+      Disk Storage of dictionary.txt WITHOUT stop words: 577,864 bytes
+      Disk Storage of dictionary.txt WITH stop words: 581,637 bytes
 
+      Percentage reduction after removing numerical terms: 4.087%
 
+      Disk Storage of postings.txt WITHOUT stop words: 1,746,756 bytes
+      Disk Storage of postings.txt WITH stop words: 2,202,932 bytes
+
+      Percentage reduction after removing numerical terms: 31.708 % (Potential speed up in querying!)
+      
 - Q3: The NLTK tokenizer may not correctly tokenize all terms. What do you observe from the resulting 
       terms produced by sent_tokenize() and word_tokenize()? Can you propose rules to further refine 
       these results?
