@@ -116,9 +116,6 @@ def write_data(sorted_keys, dictionary_data, postings_data):
         # Adds the key_term, size, starting cursor
         dictionary_data.write(key + ' ' + str(len(index[key])) + ' ' + str(starting_cursor) + '\n')
 
-        skip_spaces = math.sqrt(len(index[key]))
-        skip_spaces = int(skip_spaces)
-
         position = -1
         for doc_id in index[key]:
             position += 1
