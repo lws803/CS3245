@@ -12,17 +12,28 @@ import struct
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import stopwords
 
+# Global variables
 docs = {}
 index = {}
 stemmer = PorterStemmer()
 
-FIXED_WIDTH = 4
+FIXED_WIDTH = 4 # Used in the packing of the postings list
+ 
+"""
+In order to aid our understanding of the assignment, as well as help us answer the
+essay questions provided, we decided to create a customised script to determine the effects
+of ignoring numbers, stopwords, etc. on the size of the dictionary and postings list. 
+"""
 IGNORE_NUMBERS = False # Adding an option to ignore any numerical terms
 IGNORE_PUNCTUATION = True # Adding an option to strip away all punctuation in a term
 IGNORE_SINGLE_CHARACTER_TERMS = True # Adding an option to ignore single character terms
-IGNORE_STOPWORDS = False # Adding an option to ignore stopwords
+IGNORE_STOPWORDS = True # Adding an option to ignore stopwords
 PERFORM_STEMMING = True # Adding an option to perform stemming on the current term
 
+"""
+Adds a term to the index, but first checks whether the term is allowed to be added after normalizing it
+based on the boolean values above.
+"""
 def add_to_index(lines, filename):
     for individual_line in lines:
         words = nltk.word_tokenize(individual_line)
@@ -38,6 +49,7 @@ def add_to_index(lines, filename):
             else:
                 index[term] = {int(filename)}
 
+# Normalizes a term based on the boolean variables' values
 def normalize(term):
     term = term.lower() # Perform case folding on the current term
 
@@ -69,6 +81,7 @@ def normalize(term):
     
     return term
 
+# Adds all terms to the index
 def indexer(input_directory):
     # Term processing
     for filename in os.listdir(input_directory):
@@ -77,6 +90,7 @@ def indexer(input_directory):
         lines = nltk.sent_tokenize(whole_text)
         add_to_index(lines, filename) # Perform term normalization and add terms to index
 
+# Sorts the entire index
 def sort_index():
     for key in index.keys(): index[key] = sorted(index[key])
     sorted_keys = sorted(index.keys())
@@ -87,6 +101,7 @@ def sort_index():
     
     return sorted_keys
 
+# Writes the dictionary and postings list of index to dictionary.txt and postings.txt respectively
 def write_data(sorted_keys, dictionary_data, postings_data):
     # Adds all the document IDs to the first line seperated by commas
     for key in sorted(docs):
@@ -109,6 +124,7 @@ def write_data(sorted_keys, dictionary_data, postings_data):
             position += 1
             postings_data.write(encoder(doc_id))
 
+# Packs the data
 def encoder(integer):
     return struct.pack('I', integer)
 

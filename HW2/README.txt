@@ -6,21 +6,63 @@ We're using Python Version 3.6.5 for this assignment.
 
 == General Notes about this assignment ==
 
-Give an overview of your program, describe the important algorithms/steps 
-in your program, and discuss your experiments in general.  A few paragraphs 
-are usually sufficient.
-
-
 === index.py ===
 
-For the indexer, we allow 5 parameters for customisations on what to discard from the dictionary. These paramters are fed into the normalize function as the indexing is done. Indexing is done by reading the files one by one, then extracting the lines within the documents. These lines are then sentence tokenized using (sent_tokenize) before tokenizing with word_tokenize to obtain the terms. The terms are then processed in the normalize function previously mentioned before storing into the dictionary in memory. This dictionary, a (term: listOfDocIDs) pair is then sorted before writing to an actual file (postings.txt and dictionary.txt). For dictionary.txt, we have decided to reserve the first line for all the documment IDs that were indexed. This is so that it will be easier to obtain the universal set during searching. Subsequent lines are added in the form of tuples where elements (term, frequency, docID) are seperated by a single space. The frequency for each term would later facilitate the retrieval method in search.py. As for postings.txt, we have decided to use byte encoding to store the postings lists as it will take up less space compared to storing as characters in a text document. Since the maximum docID number is within the integer limit for a 4 byte unsigned integer, it would make more sense to pack it in a binary file. These docID are written to file using struct.pack() method.
+- For the indexer, we allow 5 parameters for customisations on what to discard from the dictionary. 
+These paramters are fed into the normalize function as the indexing is done. Indexing is done by 
+reading the files one by one, then extracting the lines within the documents. 
+- These lines are then sentence tokenized using (sent_tokenize) before tokenizing with word_tokenize 
+to obtain the terms. The terms are then processed in the normalize function previously mentioned before 
+storing into the dictionary in memory. 
+- This dictionary, a (term: listOfDocIDs) pair is then sorted before writing to an actual file 
+(postings.txt and dictionary.txt). 
 
+- For dictionary.txt, we have decided to reserve the first line for all the documment IDs that were 
+indexed. This is so that it will be easier to obtain the universal set during searching. Subsequent 
+lines are added in the form of tuples where elements (term, frequency, docID) are seperated by a 
+single space. The frequency for each term would later facilitate the retrieval method in search.py. 
+- As for postings.txt, we have decided to use byte encoding to store the postings lists as it will take 
+up less space compared to storing as characters in a text document. Since the maximum docID number is 
+within the integer limit for a 4 byte unsigned integer, it would make more sense to pack it in a binary 
+file. These docID are written to file using struct.pack() method.
 
 Experimental notes:
-We have tried to store the skip pointers in the postings list as well in the first place but quickly realise that it will not help in reducing the time complexity at all. By storing the skip pointers in the postings file, it will double up the size of the postings file since now each docID would be accompanied by a skip pointer (if any, else it will be stored as 0). This will actually be detrimental to the retrieval operation in search as it will now have to read twice as many bytes iteratively. We have decided to leave this up to search.py to generate the skip pointers instead during retrieval for the required term.
+We have tried to store the skip pointers in the postings list as well in the first place but quickly 
+realise that it will not help in reducing the time complexity at all. By storing the skip pointers in 
+the postings file, it will double up the size of the postings file since now each docID would be 
+accompanied by a skip pointer (if any, else it will be stored as 0). This will actually be detrimental 
+to the retrieval operation in search as it will now have to read twice as many bytes iteratively. We 
+have decided to leave this up to search.py to generate the skip pointers instead during retrieval for 
+the required term.
 
+=== search.py ===
+- The first step was to create a universal list out of all the terms founding in the dataset. This 
+universal set was used to compute the negation (i.e. NOT) of a term when processing the boolean query.
 
+- Next, every query in the file-of-queries is processed by first generating a queue of terms generated
+from the shunting yard algorithm. In our implementation, the operator "NOT" was treated like a normal
+term rather than an operator, and processed based on if there was a boolean query consisting of the 
+operator "OR NOT", in which case the negation of the NOT term was processed, and "AND NOT", in which case
+an optimisation was used (for A NOT B simply remove postings with term B in postings list in A).
 
+- The processing for each query is as follows:
+
+(i) Shunting yard algorithm generates a queue of tokens for each query
+
+(ii) Each token in the queue is processed from left to right using a processing stack. If the token is
+a normal term in the dictionary, we first normalized the token as per normalization techniques used in 
+index.py and then add its postings list to the stack. If the token is a recognised operator, the 
+respective operation from our "Logic" class will be performed (i.e. either one of AND, NOT, OR, AND NOT). 
+OR NOT is processed by first doing a NOT operation on the respective term and then doing an OR with 
+the other term.
+
+(iii) However, as mentioned above, before performing the operation on the postings list, a skip list was
+generated in memory during retrieval for the required term in order to increase processing speed as well
+as reduce the size of the postings file dramatically (by 50% as each term had an associated 4 byte skip
+pointer encoding in our original implementation!).
+
+(iv) After processing each operation in the query, the resulting list of docID terms are written to the
+output file as the answer for that particular query. 
 
 == Files included with this submission ==
 
@@ -81,6 +123,8 @@ Websites:
       documents, we would also save the trouble of querying such terms which could potentially result 
       in a larger postings list to merge with. Also, the postings and dictionary file will be much 
       smaller as we no longer have to store these stopwords together with their postings lists.
+
+
 
 - Q3: The NLTK tokenizer may not correctly tokenize all terms. What do you observe from the resulting 
       terms produced by sent_tokenize() and word_tokenize()? Can you propose rules to further refine 
