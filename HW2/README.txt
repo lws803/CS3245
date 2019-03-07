@@ -1,4 +1,6 @@
 This is the README file for A0167342E-A0177603A's submission
+Email address for A0167342E: e0175775@u.nus.edu
+Email address for A0177603A: e0260109@u.nus.edu
 
 == Python Version ==
 
