@@ -10,6 +10,18 @@ Give an overview of your program, describe the important algorithms/steps
 in your program, and discuss your experiments in general.  A few paragraphs 
 are usually sufficient.
 
+
+=== index.py ===
+
+For the indexer, we allow 5 parameters for customisations on what to discard from the dictionary. These paramters are fed into the normalize function as the indexing is done. Indexing is done by reading the files one by one, then extracting the lines within the documents. These lines are then sentence tokenized using (sent_tokenize) before tokenizing with word_tokenize to obtain the terms. The terms are then processed in the normalize function previously mentioned before storing into the dictionary in memory. This dictionary, a (term: listOfDocIDs) pair is then sorted before writing to an actual file (postings.txt and dictionary.txt). For dictionary.txt, we have decided to reserve the first line for all the documment IDs that were indexed. This is so that it will be easier to obtain the universal set during searching. Subsequent lines are added in the form of tuples where elements (term, frequency, docID) are seperated by a single space. The frequency for each term would later facilitate the retrieval method in search.py. As for postings.txt, we have decided to use byte encoding to store the postings lists as it will take up less space compared to storing as characters in a text document. Since the maximum docID number is within the integer limit for a 4 byte unsigned integer, it would make more sense to pack it in a binary file. These docID are written to file using struct.pack() method.
+
+
+Experimental notes:
+We have tried to store the skip pointers in the postings list as well in the first place but quickly realise that it will not help in reducing the time complexity at all. By storing the skip pointers in the postings file, it will double up the size of the postings file since now each docID would be accompanied by a skip pointer (if any, else it will be stored as 0). This will actually be detrimental to the retrieval operation in search as it will now have to read twice as many bytes iteratively. We have decided to leave this up to search.py to generate the skip pointers instead during retrieval for the required term.
+
+
+
+
 == Files included with this submission ==
 
 1. dictionary.txt - the dictionary part of our index
