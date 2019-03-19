@@ -119,9 +119,11 @@ def sort_index():
 def write_data(sorted_keys, dictionary_data, postings_data):
     # Adds all the document IDs to the first line seperated by commas
     for key in sorted(docs):
-        # TODO: Fix crash cause doc not in doc_length, key error: 9
-        
-        dictionary_data.write(str(key) + ", " + str(doc_length[key]) + ", ")
+        dictionary_data.write(str(key) + ", ")
+        if (key in doc_length):
+            dictionary_data.write(str(doc_length[key]) + ", ")
+        else:
+            dictionary_data.write("0, ")
     dictionary_data.write("\n")
 
     # Adds all the dictionary terms as well as the postings list to a seperate postings file
