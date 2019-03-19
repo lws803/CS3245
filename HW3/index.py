@@ -52,7 +52,7 @@ def add_to_index(lines, filename):
                 doc_length[(int(filename))] = 0
             
             # Next, increment term frequency of the term in this particular document
-            if (int(filename) in term_freq):
+            if ((int(filename),term) in term_freq):
                 term_freq[(int(filename),term)] += 1
             else:
                 term_freq[(int(filename),term)] = 1
