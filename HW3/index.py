@@ -15,6 +15,8 @@ from nltk.corpus import stopwords
 # Global variables
 docs = {}
 index = {}
+term_freq = {}
+doc_length = {}
 stemmer = PorterStemmer()
 
 FIXED_WIDTH = 4 # Used in the packing of the postings list
@@ -46,8 +48,11 @@ def add_to_index(lines, filename):
             # After performing all normalization methods to the term, add it to the dictionary
             if term in index:
                 index[term].add(int(filename))
+                term_freq[(int(filename),term)] += 1
             else:
                 index[term] = {int(filename)}
+                term_freq[(int(filename), term)] = 0
+                doc_length[(int(filename))] += 1
 
 # Normalizes a term based on the boolean variables' values
 def normalize(term):
@@ -105,7 +110,7 @@ def sort_index():
 def write_data(sorted_keys, dictionary_data, postings_data):
     # Adds all the document IDs to the first line seperated by commas
     for key in sorted(docs):
-        dictionary_data.write(str(key) + ", ")
+        dictionary_data.write(str(key) + ", " + str(doc_length[key]) + ", ")
     dictionary_data.write("\n")
 
     # Adds all the dictionary terms as well as the postings list to a seperate postings file
@@ -119,7 +124,11 @@ def write_data(sorted_keys, dictionary_data, postings_data):
         position = -1
         for doc_id in index[key]:
             position += 1
+            # Write and encode the document ID
             postings_data.write(encoder(doc_id))
+            # Write and encode the term frequency in the document
+            position += 1
+            postings_data.write(encoder(term_freq[(doc_id, key)]))
 
 # Packs the data
 def encoder(integer):
@@ -153,7 +162,7 @@ if input_directory == None or output_file_postings == None or output_file_dictio
 if __name__ == "__main__":
     dictionary_data = open(output_file_dictionary, 'w')
     postings_data = open(output_file_postings, 'wb')
-
+    
     indexer(input_directory) # Index all terms in input directory
     sorted_keys = sort_index() # Sort the index
     write_data(sorted_keys, dictionary_data, postings_data) # write data to dictionary.txt and postings.txt
