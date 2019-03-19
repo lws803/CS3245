@@ -115,17 +115,23 @@ def mainQuery (query_string):
         score = np.dot(tf_idn_q, tf_idn_doc)[0]
         scores[doc] = score
 
+    sorted_list = []
+    for key in scores:
+        sorted_list.append((-1*scores[key], key)) 
+        # So that the scores can be sorted in descending order and the docs sorted in ascending order
+    sorted_list.sort()
+
     # Print the first 10
     count = 0
-    for i in sorted(scores.items(), key=operator.itemgetter(1), reverse=True):
+    for i in sorted_list:
         print (i)
         count += 1
         if (count == 10):
             break
-
-    print ("=========================================")
+    print ("\n================== Last 10 =======================")
+    sorted_list.sort(reverse=True)
     count = 0
-    for i in sorted(scores.items(), key=operator.itemgetter(1)):
+    for i in sorted_list:
         print (i)
         count += 1
         if (count == 10):
@@ -177,7 +183,7 @@ if __name__ == "__main__":
 
     # Store terms in memory with their frequencies and starting byte offsets
     populateDictionaryAndUniverse(dictionary.readlines())
-    query = "rainbow morning trading"
+    query = input("enter your query: ")
     mainQuery(query)
 
     # Process each query in the queries file
