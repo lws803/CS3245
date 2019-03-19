@@ -45,23 +45,23 @@ def add_to_index(lines, filename):
             if term is None: continue
             if term == '': continue
             
+            # First, increment the doc_length value
+            if (int(filename) in doc_length):
+                doc_length[(int(filename))] += 1
+            else:
+                doc_length[(int(filename))] = 0
+            
+            # Next, increment term frequency of the term in this particular document
+            if (int(filename) in term_freq):
+                term_freq[(int(filename),term)] += 1
+            else:
+                term_freq[(int(filename),term)] = 1
+            
             # After performing all normalization methods to the term, add it to the dictionary
             if term in index:
                 index[term].add(int(filename))
-                # TODO: Double check logic here, we can only increment += 1 if the key exists in the freq
-                if (int(filename) in term_freq):
-                    term_freq[(int(filename),term)] += 1
-                else:
-                    term_freq[(int(filename),term)] = 1
-
             else:
                 index[term] = {int(filename)}
-                term_freq[(int(filename), term)] = 0
-                if (int(filename) in doc_length):
-                    doc_length[(int(filename))] += 1
-                else:
-                    doc_length[(int(filename))] = 0
-
 
 # Normalizes a term based on the boolean variables' values
 def normalize(term):
