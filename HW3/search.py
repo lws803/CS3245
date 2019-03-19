@@ -57,26 +57,22 @@ stemmer = PorterStemmer()
 terms = {} # Document frequencies for each term
 documents = {}
 
-# Class of logical functions processed in each query
-class Logic:
-    def cosineSimilarity (query):
-        tf_q = Counter(nltk.word_tokenize(query))
-        
-        # For file among all files
-        # Find the cosine similarity with the query term
-        return []
-
-
 
 def mainQuery (query_string):
     tf_doc = {}
-    tf_q = Counter(nltk.word_tokenize(query))
+    tf_q = {}
+
+    for token in nltk.word_tokenize(query):
+        token = normaliseTerm(token)
+        if token not in tf_q:
+            tf_q[token] = 1
+        else:
+            tf_q[token] += 1
 
     # We only process terms that are within the dictionary and document
     # If its not in either one of them we just ignore
-
     for token in tf_q.keys():
-        if (token not in terms): continue
+        if (token not in terms): continue # TODO: Ensure that we can just skip it like this
         offset = terms[token][1]
         size = terms[token][0] # Also the document frequency per term
 
@@ -89,14 +85,16 @@ def mainQuery (query_string):
             else:
                 tf_doc[unpacked_value][token] = term_freq
 
+            # TODO: Double check the frequencies
 
+    # Main score counting loop
     scores = {}
     # We will end up with some terms without similar documents, if that's the case just put 0
     for doc in tf_doc.keys():
         tf_idn_doc = []
         tf_idn_q = []
         for token in tf_q.keys():
-            if (token not in terms): continue
+            if (token not in terms): continue # TODO: Ensure that we can just skip it like this
 
             # Iterate over all the documents and start scoring them
             if (token not in tf_doc[doc]):
@@ -124,8 +122,20 @@ def mainQuery (query_string):
         count += 1
         if (count == 10):
             break
+
+    print ("=========================================")
+    count = 0
+    for i in sorted(scores.items(), key=operator.itemgetter(1)):
+        print (i)
+        count += 1
+        if (count == 10):
+            break
+
     # print(len(documents))
     # print (tf_doc)
+    # TODO: Obtain result and compare with the last few. See if the first 10 is really more relevant than the last 10
+
+
 
 # normaliseTerm user search query terms
 def normaliseTerm (token):
@@ -167,7 +177,7 @@ if __name__ == "__main__":
 
     # Store terms in memory with their frequencies and starting byte offsets
     populateDictionaryAndUniverse(dictionary.readlines())
-    query = "the man"
+    query = "rainbow morning trading"
     mainQuery(query)
 
     # Process each query in the queries file
