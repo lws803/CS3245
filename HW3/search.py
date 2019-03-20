@@ -129,11 +129,11 @@ def findCosineSimilarity (query_string):
             break
         print(i)
         if (count == 10 or sorted_list[-1] == i):
-            output.write(str(i[1]) + "\n")
+            output.write(str(i[1]))
         else:
             output.write(str(i[1]) + " ")
 
-
+    output.write("\n")
 # normaliseTerm user search query terms
 def normaliseTerm (token):
     token = token.lower() # Perform case folding on the current term
