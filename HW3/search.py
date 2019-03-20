@@ -52,17 +52,17 @@ dictionary = None
 output = None
 postings = None
 queries = None
-operators = {"AND": 4, "OR": 3}
+
 stemmer = PorterStemmer()
 terms = {} # Document frequencies for each term
 documents = {}
 
 
-def mainQuery (query_string):
+def findCosineSimilarity (query_string):
     tf_doc = {}
     tf_q = {}
 
-    for token in nltk.word_tokenize(query):
+    for token in nltk.word_tokenize(query_string):
         token = normaliseTerm(token)
         if token not in tf_q:
             tf_q[token] = 1
@@ -124,23 +124,14 @@ def mainQuery (query_string):
     # Print the first 10
     count = 0
     for i in sorted_list:
-        print (i)
         count += 1
         if (count == 10):
             break
-    print ("\n================== Last 10 =======================")
-    sorted_list.sort(reverse=True)
-    count = 0
-    for i in sorted_list:
-        print (i)
-        count += 1
-        if (count == 10):
-            break
-
-    # print(len(documents))
-    # print (tf_doc)
-    # TODO: Obtain result and compare with the last few. See if the first 10 is really more relevant than the last 10
-
+        print(i)
+        if (count == 9 or sorted_list[-1] == i):
+            output.write(str(i[1]) + "\n")
+        else:
+            output.write(str(i[1]) + " ")
 
 
 # normaliseTerm user search query terms
@@ -174,6 +165,12 @@ def populateDictionaryAndUniverse (lines):
             terms[line.split()[0]] = (int(line.split()[1]), int(line.split()[2]))
 
 
+def query(query_lines):
+    for line in query_lines:
+        line = line.replace("\n", "")
+        if (line != "" and line is not None):
+            findCosineSimilarity(line)
+
 
 if __name__ == "__main__":
     dictionary = open(dictionary_file, 'r')
@@ -183,11 +180,8 @@ if __name__ == "__main__":
 
     # Store terms in memory with their frequencies and starting byte offsets
     populateDictionaryAndUniverse(dictionary.readlines())
-    query = input("enter your query: ")
-    mainQuery(query)
-
     # Process each query in the queries file
-    # query(queries.readlines())
+    query(queries.readlines())
 
     queries.close()
     dictionary.close()
