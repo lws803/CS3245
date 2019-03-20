@@ -125,10 +125,10 @@ def findCosineSimilarity (query_string):
     count = 0
     for i in sorted_list:
         count += 1
-        if (count == 10):
+        if (count == 11):
             break
         print(i)
-        if (count == 9 or sorted_list[-1] == i):
+        if (count == 10 or sorted_list[-1] == i):
             output.write(str(i[1]) + "\n")
         else:
             output.write(str(i[1]) + " ")
