@@ -11,8 +11,6 @@ import string
 import numpy as np
 from numpy import linalg as LA
 from collections import Counter
-
-
 from nltk.stem.porter import PorterStemmer
 
 # Parameters 
@@ -150,7 +148,6 @@ def normaliseTerm (token):
     
     return token
 
-
 # Initialise the dictionary and universe set for all documents
 def populateDictionaryAndUniverse (lines):
     firstLine = True
@@ -173,7 +170,6 @@ def query(query_lines):
         line = line.replace("\n", "")
         if (line != "" and line is not None):
             findCosineSimilarity(line)
-
 
 if __name__ == "__main__":
     dictionary = open(dictionary_file, 'r')
