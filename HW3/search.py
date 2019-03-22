@@ -100,7 +100,7 @@ def findCosineSimilarity (query_string):
             if (token not in tf_doc[doc]):
                 tf_idn_doc.append(0)
             else:
-                tf_idn_doc.append((1+math.log10(tf_doc[doc][token]))*(math.log10(len(documents)/float(terms[token][0]))))
+                tf_idn_doc.append((1+math.log10(tf_doc[doc][token]))*1) # TODO: Test removal of document idf
 
             tf_idn_q.append((1+math.log10(tf_q[token]))*(math.log10(len(documents)/float(terms[token][0]))))
 
@@ -134,6 +134,7 @@ def findCosineSimilarity (query_string):
             output.write(str(i[1]) + " ")
 
     output.write("\n")
+    print("=====================================")
 # normaliseTerm user search query terms
 def normaliseTerm (token):
     token = token.lower() # Perform case folding on the current term
