@@ -57,7 +57,7 @@ stemmer = PorterStemmer()
 terms = {} # Document frequencies for each term
 documents = {}
 
-
+# Find cosine similarity between query string and document terms
 def findCosineSimilarity (query_string):
     tf_doc = {}
     tf_q = {}
@@ -104,7 +104,7 @@ def findCosineSimilarity (query_string):
 
             tf_idn_q.append((1+math.log10(tf_q[token]))*(math.log10(len(documents)/float(terms[token][0]))))
 
-        # After we're done setting the matrix based on the vector space for query
+        # After setting the matrix based on the vector space for query
         tf_idn_q = np.array(tf_idn_q)
         tf_idn_q = tf_idn_q/LA.norm(tf_idn_q)
 
@@ -135,6 +135,8 @@ def findCosineSimilarity (query_string):
 
     output.write("\n")
     print("=====================================")
+
+
 # normaliseTerm user search query terms
 def normaliseTerm (token):
     token = token.lower() # Perform case folding on the current term
@@ -165,7 +167,7 @@ def populateDictionaryAndUniverse (lines):
             # Term -> term_frequency, postings list address
             terms[line.split()[0]] = (int(line.split()[1]), int(line.split()[2]))
 
-
+# Perform the query operations
 def query(query_lines):
     for line in query_lines:
         line = line.replace("\n", "")
