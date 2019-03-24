@@ -82,7 +82,8 @@ def calculate_doc_length(lines, filename):
                 continue
     
     # Now, square root the total sum of term weights and inverse the result
-    inverse_doc_len = (float)(1/math.sqrt(inverse_doc_len))
+    if inverse_doc_len != 0.0:
+        inverse_doc_len = (float)(1/math.sqrt(inverse_doc_len))
 
     # Assign this value to the current docID
     inverse_doc_length[(int)(filename)] = (float)(inverse_doc_len)
