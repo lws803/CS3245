@@ -16,7 +16,7 @@ from nltk.corpus import stopwords
 docs = {}
 index = {}
 term_freq = {}
-doc_length = {}
+inverse_doc_length = {}
 stemmer = PorterStemmer()
 
 FIXED_WIDTH = 4 # Used in the packing of the postings list
@@ -45,12 +45,6 @@ def add_to_index(lines, filename):
             if term is None: continue
             if term == '': continue
             
-            # First, increment the doc_length value
-            if (int(filename) in doc_length):
-                doc_length[(int(filename))] += 1
-            else:
-                doc_length[(int(filename))] = 0
-            
             # Next, increment term frequency of the term in this particular document
             if ((int(filename),term) in term_freq):
                 term_freq[(int(filename),term)] += 1
@@ -62,6 +56,36 @@ def add_to_index(lines, filename):
                 index[term].add(int(filename))
             else:
                 index[term] = {int(filename)}
+
+"""
+Calculates the inverse of the document length, which will be used in cosine normalization in serach.py
+under the lnc.ltc scheme
+"""
+def calculate_doc_length(lines, filename):
+    inverse_doc_len = 0.0 # Variable to store the inverse doc length
+    words_counted = [] # Keeps track of which terms have already been accounted for
+
+    for individual_line in lines:
+        words = nltk.word_tokenize(individual_line)
+
+        # Adds squared weights of all the distinct terms in the document
+        for term in words:
+            term = normalize(term)
+            if term is None: continue
+            if term == '': continue
+            
+            if term not in words_counted:
+                # Add the squared weight to the total length
+                inverse_doc_len += (float)(math.pow((float)(1 + math.log10(term_freq[(int(filename), term)])), 2))
+                words_counted.append(term)
+            else:
+                continue
+    
+    # Now, square root the total sum of term weights and inverse the result
+    inverse_doc_len = (float)(1/math.sqrt(inverse_doc_len))
+
+    # Assign this value to the current docID
+    inverse_doc_length[(int)(filename)] = (float)(inverse_doc_len)
 
 # Normalizes a term based on the boolean variables' values
 def normalize(term):
@@ -103,6 +127,7 @@ def indexer(input_directory):
         whole_text = f.read()
         lines = nltk.sent_tokenize(whole_text)
         add_to_index(lines, filename) # Perform term normalization and add terms to index
+        calculate_doc_length(lines, filename) # Perform document length calculation, which will be used for document (cosine) normalization
 
 # Sorts the entire index
 def sort_index():
@@ -120,14 +145,13 @@ def write_data(sorted_keys, dictionary_data, postings_data):
     # Adds all the document IDs to the first line seperated by commas
     for key in sorted(docs):
         dictionary_data.write(str(key) + ", ")
-        if (key in doc_length):
-            dictionary_data.write(str(doc_length[key]) + ", ")
+        if (key in inverse_doc_length):
+            dictionary_data.write(str(inverse_doc_length[key]) + ", ")
         else:
             dictionary_data.write("0, ")
     dictionary_data.write("\n")
 
     # Adds all the dictionary terms as well as the postings list to a seperate postings file
-
     for key in sorted_keys:
         # Print out to dictionary.txt and postings.txt
         starting_cursor = postings_data.tell()
