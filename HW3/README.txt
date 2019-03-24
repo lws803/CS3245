@@ -67,11 +67,11 @@ Phrasal queries could be achieved by storing bigrams instead of unigrams. Howeve
 
 2. Describe how your search engine reacts to long documents and long queries as compared to short documents and queries. Is the normalization you use sufficient to address the problems (see Section 6.4.4 for a hint)? In your judgement, is the ltc.lnc scheme (n.b., not the ranking scheme you were asked to implement) sufficient for retrieving documents from the Reuters-21578 collection?
 
-The current search engine would not consider idf for documents. That means that documents with more of the hit terms are favoured hence longer documents with more term hits would present as a more relevant document. Whereas, long queries with more common terms like 'the' will subject to idf and hence gain a reduction in weightage. This could affect the overall score as well for that document after dot product. In essence, longer queries will yield more accurate results especially if common terms such as 'the' is used extensively in the query, then that word will gain lesser weightage as it is seen as not so crucial in defining relevance.
+The current search engine would not consider idf for documents. That means that we can save up computation on counting IDF for every term in each document. Moreover if we are doing short queries, we often ifgnore these common 'stopword' terms and the idf would not be as useful. If we are using longer queries however, then idf might come into play especially if we use more functional determiners.
 
-No the normalisation we've used is insufficient in addressing the problems of 'stopwords' as we might still succumb to irrelevant documents especially when our queries are short.
+No the normalisation we've used is insufficient in addressing the problems of 'stopwords' as we might still succumb to irrelevant documents especially when our queries are long.
 
-The ltc.lnc scheme might work better for shorter queries as there are enough documents to determine the most common and irrelevant terms to distribute a lower weightage for. Whereas lnc for queries might work better as 'stopwords' terms could sometimes not be used at all.
+The ltc.lnc scheme might work better for longer queries as there are enough documents to determine the most common and irrelevant terms to distribute a lower weightage for. Whereas lnc for queries might work better as we can save up computation for longer queries.
 
 
 3. Do you think zone or field parametric indices would be useful for practical search in the Reuters collection? Note: the Reuters collection does have metadata for each article but the quality of the metadata is not uniform, nor are the metadata classifications uniformly applied (some documents have it, some don't). Hint: for the next Homework #4, we will be using field metadata, so if you want to base Homework #4 on your Homework #3, you're welcomed to start support of this early (although no extra credit will be given if it's right).
