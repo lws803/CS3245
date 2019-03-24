@@ -58,6 +58,25 @@ similarity results, we multiplied the cosine similarities by -1 and stored it to
 pair in an array. This is because we wish to sort the cosine similarity score by desceding order (larger the more 
 relevant) and document IDs by ascending order. After sorting, we just have to output the first 10 results or less.
 
+== Essay Questions ==
+
+1. In this assignment, we didn't ask you to support phrasal queries, which is a feature that is typically supported in web search engines. Describe how you would support phrasal search in conjunction with the VSM model. A sketch of the algorithm is sufficient. (For those of you who like a challenge, please go ahead and implement this feature in your submission but clearly demarcate it in your code and allow this feature to be turned on or off using the command line switch "-x" (where "-x" means to turn on the extended processing of phrasal queries). We will give a small bonus to submissions that achieve this functionality correctly).
+
+Phrasal queries could be achieved by storing bigrams instead of unigrams. However, this could cause a dictionary/ postings list blow up as now there are V^2 terms. Another way of doing it would be to store a positional index and then allocating a score to how far apart the terms are in the document as compared to the queries. However, either of these ways would mean that we have to create an entirely different dictionary and postings list.
+
+
+2. Describe how your search engine reacts to long documents and long queries as compared to short documents and queries. Is the normalization you use sufficient to address the problems (see Section 6.4.4 for a hint)? In your judgement, is the ltc.lnc scheme (n.b., not the ranking scheme you were asked to implement) sufficient for retrieving documents from the Reuters-21578 collection?
+
+The current search engine would not consider idf for documents. That means that documents with more of the hit terms are favoured hence longer documents with more term hits would present as a more relevant document. Whereas, long queries with more common terms like 'the' will subject to idf and hence gain a reduction in weightage. This could affect the overall score as well for that document after dot product. In essence, longer queries will yield more accurate results especially if common terms such as 'the' is used extensively in the query, then that word will gain lesser weightage as it is seen as not so crucial in defining relevance.
+
+No the normalisation we've used is insufficient in addressing the problems of 'stopwords' as we might still succumb to irrelevant documents especially when our queries are short.
+
+The ltc.lnc scheme might work better for shorter queries as there are enough documents to determine the most common and irrelevant terms to distribute a lower weightage for. Whereas lnc for queries might work better as 'stopwords' terms could sometimes not be used at all.
+
+
+3. Do you think zone or field parametric indices would be useful for practical search in the Reuters collection? Note: the Reuters collection does have metadata for each article but the quality of the metadata is not uniform, nor are the metadata classifications uniformly applied (some documents have it, some don't). Hint: for the next Homework #4, we will be using field metadata, so if you want to base Homework #4 on your Homework #3, you're welcomed to start support of this early (although no extra credit will be given if it's right).
+
+
 == Files included with this submission ==
 
 1. dictionary_final.txt - the dictionary part of our index
