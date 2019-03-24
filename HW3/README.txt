@@ -11,7 +11,7 @@ We're using Python Version 3.6.5 for this assignment.
 === index.py ===
 
 - For the indexer, we allow 5 parameters for customisations on what to discard from the dictionary. 
-These paramters are fed into the normalize function as the indexing is done. Indexing is done by 
+These parameters are fed into the normalize function as the indexing is done. Indexing is done by 
 reading the files one by one, then extracting the lines within the documents. 
 - These lines are then sentence tokenized using (sent_tokenize) before tokenizing with word_tokenize 
 to obtain the terms. The terms are then processed in the normalize function previously mentioned before 
@@ -19,23 +19,22 @@ storing into the dictionary in memory.
 - This dictionary, a (term: listOfDocIDs) pair is then sorted before writing to an actual file 
 (postings.txt and dictionary.txt). 
 
-- For dictionary.txt, we have decided to reserve the first line for all the documment IDs that were 
-indexed. This is so that it will be easier to obtain the universal set during searching. Subsequent 
-lines are added in the form of tuples where elements (term, frequency, docID) are seperated by a 
-single space. The frequency for each term would later facilitate the retrieval method in search.py. 
+- For dictionary.txt, we have decided to reserve the first line for all the documment IDs as well as their
+corresponding inverse of the document lengths that were indexed. This is so that it will be easier to obtain 
+the universal set during searching and make it easier to perform document normalization. 
+- In order to calculate the inverse document length, the weighted scores of each distinct term in the document
+were squared, and then the entire sum was square rooted. Finally, this sum was inversed in order to give the 
+inverse document length, which was then stored in dictionary.txt to be used for document normalisation.
+- Subsequent lines are added in the form of tuples where elements (term, frequency, docID) are seperated by a 
+single space. The doc frequency for each term would later facilitate the retrieval method in search.py. 
+
 - As for postings.txt, we have decided to use byte encoding to store the postings lists as it will take 
 up less space compared to storing as characters in a text document. Since the maximum docID number is 
 within the integer limit for a 4 byte unsigned integer, it would make more sense to pack it in a binary 
 file. These docID are written to file using struct.pack() method.
-
-Experimental notes:
-We have tried to store the skip pointers in the postings list as well in the first place but quickly 
-realise that it will not help in reducing the time complexity at all. By storing the skip pointers in 
-the postings file, it will double up the size of the postings file since now each docID would be 
-accompanied by a skip pointer (if any, else it will be stored as 0). This will actually be detrimental 
-to the retrieval operation in search as it will now have to read twice as many bytes iteratively. We 
-have decided to leave this up to search.py to generate the skip pointers instead during retrieval for 
-the required term.
+- Moreover, term frequencies of each term in that particular document were also stored in the postings list, hence
+each postings list would consist of tuples of (docID, term_freq_in_docID) pairs to aid with the ranking of documents
+using the lnc.ltc scheme in search.py
 
 === search.py ===
 The first step for search is to generate the universal terms set from dictionary.txt. Our first line consists of 
@@ -60,30 +59,58 @@ relevant) and document IDs by ascending order. After sorting, we just have to ou
 
 == Essay Questions ==
 
-1. In this assignment, we didn't ask you to support phrasal queries, which is a feature that is typically supported in web search engines. Describe how you would support phrasal search in conjunction with the VSM model. A sketch of the algorithm is sufficient. (For those of you who like a challenge, please go ahead and implement this feature in your submission but clearly demarcate it in your code and allow this feature to be turned on or off using the command line switch "-x" (where "-x" means to turn on the extended processing of phrasal queries). We will give a small bonus to submissions that achieve this functionality correctly).
+1. In this assignment, we didn't ask you to support phrasal queries, which is a feature that is typically supported 
+   in web search engines. Describe how you would support phrasal search in conjunction with the VSM model. A sketch 
+   of the algorithm is sufficient. (For those of you who like a challenge, please go ahead and implement this feature 
+   in your submission but clearly demarcate it in your code and allow this feature to be turned on or off using the 
+   command line switch "-x" (where "-x" means to turn on the extended processing of phrasal queries). We will give a 
+   small bonus to submissions that achieve this functionality correctly).
 
-Phrasal queries could be achieved by storing bigrams instead of unigrams. However, this could cause a dictionary/ postings list blow up as now there are V^2 terms. Another way of doing it would be to store a positional index and then allocating a score to how far apart the terms are in the document as compared to the queries. However, either of these ways would mean that we have to create an entirely different dictionary and postings list.
+   Answer: Phrasal queries could be achieved by storing bigrams instead of unigrams. However, this could cause a 
+           dictionary/ postings list blow up as now there are V^2 terms. Another way of doing it would be to store a 
+           positional index and then allocating a score to how far apart the terms are in the document as compared to 
+           the queries. However, either of these ways would mean that we have to create an entirely different 
+           dictionary and postings list.
 
+2. Describe how your search engine reacts to long documents and long queries as compared to short documents and 
+   queries. Is the normalization you use sufficient to address the problems (see Section 6.4.4 for a hint)? In your 
+   judgement, is the ltc.lnc scheme (n.b., not the ranking scheme you were asked to implement) sufficient for 
+   retrieving documents from the Reuters-21578 collection?
 
-2. Describe how your search engine reacts to long documents and long queries as compared to short documents and queries. Is the normalization you use sufficient to address the problems (see Section 6.4.4 for a hint)? In your judgement, is the ltc.lnc scheme (n.b., not the ranking scheme you were asked to implement) sufficient for retrieving documents from the Reuters-21578 collection?
+   Answer: The current search engine would not consider idf for documents. That means that we can save up computation 
+           on counting IDF for every term in each document. Moreover if we are doing short queries, we often ifgnore 
+           these common 'stopword' terms and the idf would not be as useful. If we are using longer queries however, 
+           then idf might come into play especially if we use more functional determiners.
 
-The current search engine would not consider idf for documents. That means that we can save up computation on counting IDF for every term in each document. Moreover if we are doing short queries, we often ifgnore these common 'stopword' terms and the idf would not be as useful. If we are using longer queries however, then idf might come into play especially if we use more functional determiners.
+           No the normalisation we've used is insufficient in addressing the problems of 'stopwords' as we might still 
+           succumb to irrelevant documents especially when our queries are long.
 
-No the normalisation we've used is insufficient in addressing the problems of 'stopwords' as we might still succumb to irrelevant documents especially when our queries are long.
+           The ltc.lnc scheme might work better for longer queries as there are enough documents to determine the most 
+           common and irrelevant terms to distribute a lower weightage for. Whereas lnc for queries might work better as 
+           we can save up computation for longer queries.
 
-The ltc.lnc scheme might work better for longer queries as there are enough documents to determine the most common and irrelevant terms to distribute a lower weightage for. Whereas lnc for queries might work better as we can save up computation for longer queries.
+3. Do you think zone or field parametric indices would be useful for practical search in the Reuters collection? 
+   Note: the Reuters collection does have metadata for each article but the quality of the metadata is not uniform, 
+   nor are the metadata classifications uniformly applied (some documents have it, some don't). Hint: for the next 
+   Homework #4, we will be using field metadata, so if you want to base Homework #4 on your Homework #3, you're 
+   welcomed to start support of this early (although no extra credit will be given if it's right).
 
+   Answer: Despite the metadat for articles in the Reuters dataset not being uniform, being able to search using queries
+           fields containing author(s), title, and date of publication may be extremely useful considering the dataset
+           is based on news articles and coverage. 
 
-3. Do you think zone or field parametric indices would be useful for practical search in the Reuters collection? Note: the Reuters collection does have metadata for each article but the quality of the metadata is not uniform, nor are the metadata classifications uniformly applied (some documents have it, some don't). Hint: for the next Homework #4, we will be using field metadata, so if you want to base Homework #4 on your Homework #3, you're welcomed to start support of this early (although no extra credit will be given if it's right).
-
+           Moreover, according to the lecture notes and textbook, zones are similar to fields except the contents of a zone
+           can be an arbitrary body of text, for example document titles and abstracts. Querying in the Reuters dataset by
+           news headlines or abstracts of long articles may be helpful in ranking relevant documents higher for the user,
+           hence both zones and field parametric indices would be a useful metric for practical search in the collection. 
 
 == Files included with this submission ==
 
 1. dictionary_final.txt - the dictionary part of our index
 2. postings_final.txt - the postings list of our index
 3. index.py - python script used to create our index from the Reuters data
-4. search.py - python script that generates a list of documents that satisfy input queries using
-               the shunting yard algorithm
+4. search.py - python script that generates a list of documents that have the highest score
+               in relation to the input query
 
 == Statement of individual work ==
 
@@ -95,7 +122,4 @@ printed) from the discussions.
 
 == References ==
 Websites:
-1. https://en.wikipedia.org/wiki/Shunting-yard_algorithm (To understand the Shunting Yard algo better)
-2. https://www.tutorialspoint.com/python/file_seek.htm (To learn how Python Files I/O functions work)
-
-== Essay questions ==
+1. https://www.tutorialspoint.com/python/file_seek.htm (To learn how Python Files I/O functions work)
