@@ -53,7 +53,7 @@ queries = None
 
 stemmer = PorterStemmer()
 terms = {} # Document frequencies for each term
-documents = {}
+documents = {} # Document with total word count
 
 # Find cosine similarity between query string and document terms
 def findCosineSimilarity (query_string):
@@ -70,7 +70,7 @@ def findCosineSimilarity (query_string):
     # We only process terms that are within the dictionary and document
     # If its not in either one of them we just ignore
     for token in tf_q.keys():
-        if (token not in terms): continue # TODO: Ensure that we can just skip it like this
+        if (token not in terms): continue
         offset = terms[token][1]
         size = terms[token][0] # Also the document frequency per term
 
@@ -83,7 +83,6 @@ def findCosineSimilarity (query_string):
             else:
                 tf_doc[unpacked_value][token] = term_freq
 
-            # TODO: Double check the frequencies
 
     # Main score counting loop
     scores = {}
@@ -92,13 +91,13 @@ def findCosineSimilarity (query_string):
         tf_idn_doc = []
         tf_idn_q = []
         for token in tf_q.keys():
-            if (token not in terms): continue # TODO: Ensure that we can just skip it like this
+            if (token not in terms): continue 
 
             # Iterate over all the documents and start scoring them
             if (token not in tf_doc[doc]):
                 tf_idn_doc.append(0)
             else:
-                tf_idn_doc.append((1+math.log10(tf_doc[doc][token]))*1) # TODO: Test removal of document idf
+                tf_idn_doc.append((1+math.log10(tf_doc[doc][token]))*1.0)
 
             tf_idn_q.append((1+math.log10(tf_q[token]))*(math.log10(len(documents)/float(terms[token][0]))))
 
@@ -107,7 +106,7 @@ def findCosineSimilarity (query_string):
         tf_idn_q = tf_idn_q/LA.norm(tf_idn_q)
 
         tf_idn_doc = np.array(tf_idn_doc)
-        tf_idn_doc = tf_idn_doc/LA.norm(tf_idn_doc)
+        tf_idn_doc = tf_idn_doc*documents[doc]
         tf_idn_doc = tf_idn_doc.reshape(len(tf_idn_doc), 1)
 
         score = np.dot(tf_idn_q, tf_idn_doc)[0]
@@ -157,7 +156,7 @@ def populateDictionaryAndUniverse (lines):
             for i in range(0, len(tokens), 2):
                 if (tokens[i] == ' \n'):
                     break
-                documents[int(tokens[i])] = int(tokens[i+1])
+                documents[int(tokens[i])] = float(tokens[i+1])
 
             firstLine = False
         else:
