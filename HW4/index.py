@@ -57,11 +57,11 @@ def split(data):
     return result
 
 def is_num(number):
-	'''
-	Remove any numbers
-	'''
-	number = number.replace(",\\.", "")
-	return number.isdigit()
+    '''
+    Remove any numbers
+    '''
+    number = number.replace(",\\.", "")
+    return number.isdigit()
 
 def clean(original_word):
     '''
