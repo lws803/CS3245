@@ -1,7 +1,6 @@
 #!/usr/bin/python
 import re
 import nltk
-import nltk
 from nltk.tokenize import word_tokenize
 from nltk.stem.porter import PorterStemmer
 import sys
@@ -37,11 +36,11 @@ def preprocess(data):
     Clean data for content before tokenizing
     '''
     data = [w for w in data if not is_num(w) and w not in string.punctuation]
-    data = [clean(w) for w in data]
+    data = [str(clean(w)) for w in data]
     data = split(data)
     data = [w for w in data if not has_weird_chars(w)]
     data = [w for w in data if len(w) > 1]
-    result_data = [STEMMER.stem(w) for w in data]
+    result_data = [str(STEMMER.stem(w)) for w in data]
     return result_data
 
 def split(data):
@@ -52,7 +51,7 @@ def split(data):
     for word in data:
         if '/' in word:
             result.extend(word.split('/'))
-    	else:
+        else:
             result.append(word)
     return result
 
@@ -84,7 +83,7 @@ def setup():
     '''
     Setting up parsing of csv files, and unicode reading
     '''
-	# For reading unicode characters 
+    # For reading unicode characters
     reload(sys)
     sys.setdefaultencoding('utf-8')
 
@@ -189,28 +188,30 @@ def indexing(dataset_file, output_dictionary, output_postings):
     postings_out.close()
 
 def usage():
-    print "usage: " + sys.argv[0] + " -i dataset_file -d dictionary-file -p postings-file"
+    print ("usage: " + sys.argv[0] + " -i dataset_file -d dictionary-file -p postings-file")
 
-dataset_file = output_file_dictionary = output_file_postings = None
 
-try:
-    opts, args = getopt.getopt(sys.argv[1:], 'i:d:p:')
-except getopt.GetoptError, err:
-    usage()
-    sys.exit(2)
-    
-for o, a in opts:
-    if o == '-i': # csv file
-        dataset_file = a
-    elif o == '-d': # dictionary file
-        output_file_dictionary = a
-    elif o == '-p': # postings file
-        output_file_postings = a
-    else:
-        assert False, "unhandled option"
-        
-if dataset_file == None or output_file_postings == None or output_file_dictionary == None:
-    usage()
-    sys.exit(2)
+if __name__ == "__main__":
+    dataset_file = output_file_dictionary = output_file_postings = None
 
-indexing(dataset_file, output_file_dictionary, output_file_postings)
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'i:d:p:')
+    except getopt.GetoptError as err:
+        usage()
+        sys.exit(2)
+
+    for o, a in opts:
+        if o == '-i': # csv file
+            dataset_file = a
+        elif o == '-d': # dictionary file
+            output_file_dictionary = a
+        elif o == '-p': # postings file
+            output_file_postings = a
+        else:
+            assert False, "unhandled option"
+
+    if dataset_file == None or output_file_postings == None or output_file_dictionary == None:
+        usage()
+        sys.exit(2)
+
+    indexing(dataset_file, output_file_dictionary, output_file_postings)
