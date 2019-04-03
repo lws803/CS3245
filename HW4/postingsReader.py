@@ -1,10 +1,12 @@
 #!/usr/bin/python3
 from struct import unpack
+from nltk import word_tokenize
+from index import preprocess
 
 
 class PostingsList:
     """
-    An iterable that iterates through the on-disk postings
+    An iterable that iterates through the on-disk postings list
     """
     def __init__(self, base_address, length, postings_fileptr):
         self.file = postings_fileptr
@@ -30,6 +32,9 @@ class PostingsList:
 
 
 class PostingsFilePointers:
+    """
+    Holds information from the postings file
+    """
     def __init__(self, postings_file):
         self.pointers = {}
         self.doc_freqs = {}
@@ -95,7 +100,7 @@ def read_dict(dictionary, postings_file):
 
 def two_way_merge(array1, array2, offset=0, use_offset=False):
     """
-    Performs a conjunction of pairs of ordered indices with positional index.
+    Performs a conjunction (and operation) of pairs of ordered indices with positional index.
     :param array1: A sorted list consisting of tuples with format (doc_id, pos_index)
     :param array2: Another sorted list with tuples in the same format as array 1
     :param offset: The difference in positional index between the item in array1 and array2 (array1 - array2)
@@ -140,6 +145,61 @@ def two_way_merge(array1, array2, offset=0, use_offset=False):
     return result
 
 
+def union(array1, array2):
+    """
+    Performs union of two arrays
+    :param array1:
+    :param array2:
+    :return: the list union.
+    """
+    result = []
+    self_left, other_left = True, True
+
+    array1 = iter(array1)
+    array2 = iter(array2)
+
+    try:
+        self_val = next(array1)
+    except StopIteration as s:
+        self_left = False
+
+    try:
+        other_val = next(array2)
+    except StopIteration as s:
+        other_left = False
+
+    while self_left or other_left:
+        if self_left and other_left:
+            if self_val < other_val:
+                try:
+                    if (len(result) > 0 and result[-1][0] != self_val[0]) or len(result) == 0: result.append(self_val)
+                    self_val = next(array1)
+                except StopIteration as s:
+                    self_left = False
+            else:
+                try:
+                    if (len(result) > 0 and result[-1][0] != other_val[0]) or len(result) == 0: result.append(other_val)
+                    other_val = next(array2)
+                except StopIteration as s:
+                    other_left = False
+
+        elif self_left:
+            try:
+                if (len(result) > 0 and result[-1][0] != self_val[0]) or len(result) == 0: result.append(self_val)
+                self_val = next(array1)
+            except StopIteration as s:
+                self_left = False
+
+        elif other_left:
+            try:
+                if (len(result) > 0 and result[-1][0] != other_val[0]) or len(result) == 0: result.append(other_val)
+                other_val = next(array2)
+            except StopIteration as s:
+                other_left = False
+
+    return result
+
+
 class SearchBackend:
     """
     This is the class of interest. It exposes the postings list to a set of high level commands.
@@ -157,9 +217,11 @@ class SearchBackend:
         :param phrase: A string with *at least* two words
         :return: a sorted list consisting of tuples of type (doc_id, pos_index) [pos index may be ignored after this operation]
         """
-        words = phrase.split()
+        words = word_tokenize(phrase)
 
         assert len(words) >= 2
+
+        words = preprocess(words)
 
         postings_lists = {}
         word_offset = {}
@@ -171,11 +233,28 @@ class SearchBackend:
             postings_lists[word] = self.postings.get_postings_list(word)
             execution_plan.append((len(postings_lists), word))
 
+        # optimize and operation by picking the smallest set first
         execution_plan = sorted(execution_plan)
         _, first = execution_plan.pop(0)
         res = postings_lists[first]
         while len(execution_plan) > 0:
             _, second = execution_plan.pop(0)
             res = two_way_merge(res, postings_lists[second], use_offset=True, offset=word_offset[first] - word_offset[second])
-
         return res
+
+    def free_text_query(self, query):
+        """
+        Retrieve documents from query
+        :param query:
+        :return:
+        """
+
+    def get_tf(self, term, documents, accessor=lambda x: x):
+        """
+        Get term frequency.
+        :param term:
+        :param documents: List of documents sorted. Could also be a result of merge list, in which case update the
+        :param accessor: Way to access document id in list
+        :return:
+        """
+        pass
