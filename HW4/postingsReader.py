@@ -218,11 +218,7 @@ class SearchBackend:
         :return: a sorted list consisting of tuples of type (doc_id, pos_index) [pos index may be ignored after this operation]
         """
         words = word_tokenize(phrase)
-
-        assert len(words) >= 2
-
         words = preprocess(words)
-
         postings_lists = {}
         word_offset = {}
         offset = 0
@@ -244,10 +240,16 @@ class SearchBackend:
 
     def free_text_query(self, query):
         """
-        Retrieve documents from query
-        :param query:
+        Retrieve documents from query.
+        :param query: A string with something. Please have something,
         :return:
         """
+        words = word_tokenize(query)
+        words = preprocess(words)
+        res = self.postings.get_postings_list(words.pop())
+        while len(words) > 0:
+            res = union(res, words.pop())
+        return res
 
     def get_tf(self, term, documents, accessor=lambda x: x):
         """
