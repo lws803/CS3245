@@ -1,5 +1,9 @@
 import unittest
+
+from nltk import word_tokenize
+
 from postingsReader import two_way_merge, SearchBackend
+from index import preprocess
 
 
 class TestTwoWayMerge(unittest.TestCase):
@@ -29,10 +33,12 @@ class TestTwoWayMerge(unittest.TestCase):
 
 class MockPostingsFilePointers:
     def __init__(self):
+        keys = preprocess(word_tokenize("I am hungry"))
+        print(keys)
         self.dict = {
-            "I": [(0, 1), (1, 5), (6, 3)],
-            "am": [(1, 4), (6, 4)],
-            "hungry": [(1, 3), (6, 5)]
+            keys[0]: [(0, 1), (1, 5), (6, 3)],
+            keys[1]: [(1, 4), (6, 4)],
+            keys[2]: [(1, 3), (6, 5)]
         }
 
     def get_postings_list(self, word):
