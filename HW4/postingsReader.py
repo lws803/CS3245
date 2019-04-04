@@ -1,4 +1,6 @@
-#!/usr/bin/python3
+#!/usr/bin/python
+import getopt
+import sys
 from struct import unpack
 from nltk import word_tokenize
 from index import preprocess
@@ -19,16 +21,18 @@ class PostingsList:
 
     def __next__(self):
 
-        if self.offset < self.length:
+        if self.offset >= self.length:
             raise StopIteration
 
-        self.file.seek(self.base_address + self.offset*8)
+        self.file.seek(self.base_address + self.offset*12)
         self.offset += 1
-        data_fields = self.file.read(8)
-        return unpack("II", data_fields)
+        data_fields = self.file.read(12)
+        return unpack("III", data_fields)
 
     def __len__(self):
         return self.length
+
+    next = __next__
 
 
 class PostingsFilePointers:
@@ -38,6 +42,7 @@ class PostingsFilePointers:
     def __init__(self, postings_file):
         self.pointers = {}
         self.doc_freqs = {}
+        self.metadata = {}
         self.postings_file = open(postings_file, "rb")
 
     def add_word(self, word, pointer, freq):
@@ -50,7 +55,7 @@ class PostingsFilePointers:
         :return:
         """
         self.pointers[word] = int(pointer)
-        self.doc_freqs = int(freq)
+        self.doc_freqs[word] = int(freq)
 
     def get_doc_freq(self, word):
         """
@@ -78,6 +83,17 @@ class PostingsFilePointers:
             return []
         return PostingsList(self.pointers[word], self.doc_freqs[word], self.postings_file)
 
+    def add_metadata(self, doc_id, length, court):
+        self.metadata[doc_id] = {"length": length, "cout": court}
+
+    def get_meta_data(self, doc_id):
+        """
+        Returns metadata
+        :param word:
+        :return:
+        """
+        return self.metadata[doc_id]
+
     def __del__(self):
         self.postings_file.close()
 
@@ -95,13 +111,15 @@ def read_dict(dictionary, postings_file):
             if len(data) == 3:
                 word, doc_freq, postings_location = data
                 postings_file_ptrs.add_word(word, postings_location, doc_freq)
+            else:
+                pass
     return postings_file_ptrs
 
 
 def two_way_merge(array1, array2, offset=0, use_offset=False):
     """
     Performs a conjunction (and operation) of pairs of ordered indices with positional index.
-    :param array1: A sorted list consisting of tuples with format (doc_id, pos_index)
+    :param array1: A sorted list consisting of tuples with format (doc_id, pos_index, ...)
     :param array2: Another sorted list with tuples in the same format as array 1
     :param offset: The difference in positional index between the item in array1 and array2 (array1 - array2)
     :param use_offset: Tells the function whether to use the offset for merging or not. If set to false, then
@@ -251,12 +269,27 @@ class SearchBackend:
             res = union(res, words.pop())
         return res
 
-    def get_tf(self, term, documents, accessor=lambda x: x):
-        """
-        Get term frequency.
-        :param term:
-        :param documents: List of documents sorted. Could also be a result of merge list, in which case update the
-        :param accessor: Way to access document id in list
-        :return:
-        """
-        pass
+if __name__ == "__main__":
+    dictionary_file = postings_file = file_of_queries = file_of_output = None
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], 'd:p:q:o:')
+    except getopt.GetoptError as err:
+        usage()
+        sys.exit(2)
+
+    for o, a in opts:
+        if o == '-d':
+            dictionary_file = a
+        elif o == '-p':
+            postings_file = a
+        elif o == '-q':
+            file_of_queries = a
+        elif o == '-o':
+            file_of_output = a
+        else:
+            assert False, "unhandled option"
+
+    postings_file_ptr = read_dict(dictionary_file, postings_file)
+    search = SearchBackend(postings_file_ptr)
+    print(list(search.phrase_query("Sim")))

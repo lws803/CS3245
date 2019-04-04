@@ -151,8 +151,8 @@ def indexing(dataset_file, output_dictionary, output_postings):
             dictionary[term][doc_id].append((i, 1))
 
         
-    dict_out = file(output_dictionary, 'w')
-    postings_out = file(output_postings, "wb")
+    dict_out = open(output_dictionary, 'w')
+    postings_out = open(output_postings, "wb")
     postings = {}
     vector_space_model = {}
     byte_offset, byte_size = 0, 4
@@ -166,12 +166,12 @@ def indexing(dataset_file, output_dictionary, output_postings):
             tf = len(pIndexes)
             weight = 1 + log(tf, 10)
             if doc_id not in vector_space_model:
-        	    vector_space_model[doc_id] = 0
+                vector_space_model[doc_id] = 0
 
             vector_space_model[doc_id] += weight**2
             for index in pIndexes:
-                postings_out.write(struct.pack('II', *index))
-                extraBytes += (byte_size * 2)
+                postings_out.write(struct.pack('III', doc_id, *index))
+                extraBytes += (byte_size * 3)
 
         dict_out.write(term + " " + str(df) + " " + str(byte_offset) + "\n")
         byte_offset += extraBytes
