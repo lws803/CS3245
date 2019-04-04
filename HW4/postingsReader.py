@@ -218,6 +218,16 @@ def union(array1, array2):
     return result
 
 
+def deduplicate_results(results):
+    prev_doc_id = -1
+    out = []
+    for res in results:
+        if res[0] != prev_doc_id:
+            out.append(res)
+            prev_doc_id = res[0]
+    return out
+
+
 class SearchBackend:
     """
     This is the class of interest. It exposes the postings list to a set of high level commands.
@@ -254,7 +264,7 @@ class SearchBackend:
         while len(execution_plan) > 0:
             _, second = execution_plan.pop(0)
             res = two_way_merge(res, postings_lists[second], use_offset=True, offset=word_offset[first] - word_offset[second])
-        return res
+        return deduplicate_results(res)
 
     def free_text_query(self, query):
         """
@@ -266,7 +276,7 @@ class SearchBackend:
         words = preprocess(words)
         res = self.postings.get_postings_list(words.pop())
         while len(words) > 0:
-            res = union(res, words.pop())
+            res = union(res, self.postings.get_postings_list(words.pop()))
         return res
 
 if __name__ == "__main__":
@@ -292,4 +302,4 @@ if __name__ == "__main__":
 
     postings_file_ptr = read_dict(dictionary_file, postings_file)
     search = SearchBackend(postings_file_ptr)
-    print(list(search.phrase_query("Sim")))
+    print(list(search.phrase_query("Sim Cheng Ho")))
