@@ -40,21 +40,21 @@ class Query:
             i = 0
             while (i < len(split_word)):
                 if (split_word[i][0] == '"'):
-                    combined = ""
+                    combined = []
                     d = i
                     while (d < len(split_word)):
-                        combined += split_word[d].replace('"', '') + " "
+                        combined.append(split_word[d].replace('"', ''))
                         d += 1
                         if split_word[d][-1] == '"':
                             i = d + 1
-                            combined += split_word[d].replace('"', '')
+                            combined.append(split_word[d].replace('"', ''))
                             break
-                    out.append(combined)
+                    out.append(preprocess(combined))
                 else:
                     if (split_word[i] != "AND"):
-                        out.append(split_word[i])
+                        out.append(preprocess([split_word[i]]))
                     i += 1
-            return True, preprocess(out)
+            return True, out
         else:
             # pre process as per normal
             self.__get_tf(query_string)
