@@ -27,14 +27,11 @@ class Query:
         self.orig_query = chomp(query)
         self.tf_q = {}
         self.processed_queries = None
-        self.processed_query = None
 
 
         self.query_type, out = self.__identify_query(chomp(query))
         if (self.query_type == QueryType.BOOLEAN):
             self.processed_queries = out
-        else:
-            self.processed_query = out
 
 
     def __identify_query(self, query_string):
@@ -64,7 +61,7 @@ class Query:
                     if (split_word[i] != "AND"):
                         out.append(split_word[i])
                     i += 1
-            return QueryType.BOOLEAN, out
+            return QueryType.BOOLEAN, preprocess(out)
         else:
             # pre process as per normal
             self.__get_tf(query_string)
@@ -73,7 +70,9 @@ class Query:
 
 
     def __get_tf (self, query_string):
-        for token in word_tokenize(query_string):
+        term_list = word_tokenize(query_string)
+        for i in range(0, len(term_list)):
+            token = str(term_list[i])
             if token not in self.tf_q:
                 self.tf_q[token] = 1
             else:
