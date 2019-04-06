@@ -6,18 +6,12 @@ from nltk import word_tokenize
 from nltk.stem.porter import PorterStemmer
 from index import preprocess
 import math
-from enum import Enum
 import re
 
 def chomp(x):
     if x.endswith("\r\n"): return x[:-2]
     if x.endswith("\n") or x.endswith("\r"): return x[:-1]
     return x
-
-class QueryType(Enum):
-    FREETEXT = 0
-    BOOLEAN = 1
-
 
 class Query:
     """
@@ -28,9 +22,8 @@ class Query:
         self.tf_q = {}
         self.processed_queries = None
 
-
-        self.query_type, out = self.__identify_query(chomp(query))
-        if (self.query_type == QueryType.BOOLEAN):
+        self.is_boolean, out = self.__identify_query(chomp(query))
+        if (self.is_boolean == True):
             self.processed_queries = out
 
 
@@ -61,11 +54,11 @@ class Query:
                     if (split_word[i] != "AND"):
                         out.append(split_word[i])
                     i += 1
-            return QueryType.BOOLEAN, preprocess(out)
+            return True, preprocess(out)
         else:
             # pre process as per normal
             self.__get_tf(query_string)
-            return QueryType.FREETEXT, None
+            return False, None
 
 
 
@@ -82,8 +75,9 @@ class Query:
     def get_tf_idf(self, dictionary, total_docs):
         tf_idf = {}
         for token in self.tf_q.keys():
-            tf_idf[token] = ((1+math.log10(tf_idf[token]))* \
-                (math.log10(total_docs/float(dictionary[token][0]))))
+            if (token in dictionary):
+                tf_idf[token] = ((1+math.log10(tf_idf[token]))* \
+                    (math.log10(total_docs/float(dictionary[token][0]))))
         return tf_idf
 
 
@@ -112,8 +106,9 @@ if __name__ == "__main__":
     for query in query_file.readlines():
         processed_query = Query(query)
 
-        if (processed_query.query_type == QueryType.BOOLEAN):
+        if (processed_query.is_boolean == True):
             print (processed_query.processed_queries)
         else:
             print (processed_query.tf_q)
+            # TODO: Test out tf_idf as well
         break
