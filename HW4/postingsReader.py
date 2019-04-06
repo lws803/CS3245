@@ -279,6 +279,32 @@ class SearchBackend:
             res = union(res, self.postings.get_postings_list(words.pop()))
         return res
 
+    def get_tf(self, term, documents):
+        """
+        Returns TF of term in document list
+        :param term:
+        :param document: A sorted list of doc ids
+        :return:
+        """
+        postings = self.postings.get_postings_list(term)
+        count = 0
+        counts = {}
+        for doc_id, position, zone in postings:
+
+            if len(documents) == 0:
+                break
+
+            if doc_id == documents[0]:
+                count += 1
+
+            elif doc_id > documents[0]:
+                if count != 0:
+                    counts[doc_id] = count
+                    count = 0
+                documents.pop(0)
+
+        return count
+
 if __name__ == "__main__":
     dictionary_file = postings_file = file_of_queries = file_of_output = None
 
