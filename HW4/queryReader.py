@@ -70,7 +70,7 @@ class Query:
 
 
     def __get_tf (self, query_string):
-        term_list = word_tokenize(query_string)
+        term_list = preprocess(word_tokenize(query_string))
         for i in range(0, len(term_list)):
             token = str(term_list[i])
             if token not in self.tf_q:
