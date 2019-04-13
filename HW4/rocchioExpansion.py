@@ -3,6 +3,9 @@ import getopt
 import sys
 from struct import unpack
 from index import preprocess
+import nltk
+from collections import Counter
+import math
 
 ALPHA = 1
 BETA = 0.75
@@ -21,7 +24,7 @@ class RocchioExpansion:
         """
         total_sum = {}
         for doc in doc_list:
-            score_table = generateTable(doc) # Obtain the tf score of documents here for all words in the form of dictionary
+            score_table = generateTable(doc) # Obtain the tf-idf score of documents here for all words in the form of dictionary
             for term in score_table:
                 if term in total_sum:
                     total_sum[term] += score_table[term]
@@ -35,11 +38,11 @@ class RocchioExpansion:
         return centroid
 
 
-    def get_rocchio_table(self, top_k, universal_vocab):
-        original_query_space = generateTable(original_query) # Obtain tf-idf of the query
-        centroid_relevant = get_centroid (top_k)
+    def get_rocchio_table(self, top_k, score_table_query):
+        original_query_space =  score_table_query # Obtain tf-idf of the query generated from queryReader
+        centroid_relevant = self.get_centroid (top_k)
         query_modified = {}
-        for term in universal_vocab:
+        for term in score_table_query:
             query_modified[term] = ALPHA*original_query_space[term] + \
             BETA*centroid_relevant[term]
             
