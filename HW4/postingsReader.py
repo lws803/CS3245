@@ -317,7 +317,7 @@ class SearchBackend:
         """
         Returns the idf of a term
         """
-        return log(self.postings.get_number_of_docs) - log(self.postings.get_doc_freq(term))
+        return log(self.postings.get_number_of_docs()) - log(self.postings.get_doc_freq(term))
 
 if __name__ == "__main__":
     dictionary_file = postings_file = file_of_queries = file_of_output = None
