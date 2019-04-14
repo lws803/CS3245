@@ -181,7 +181,7 @@ def indexing(dataset_file, output_dictionary, output_postings):
     vector_data = ""
     vector_quantities = sorted(vector_space_model.items())
     for docId, value in vector_quantities:
-        vector_data += str(docId) + ":" + str(value) + ":" + zoned_data[doc_id]['court'] + ","
+        vector_data += str(docId) + ":" + str(value) + ":" + zoned_data[doc_id]['court'] + "\n"
     dict_out.write(vector_data)
 
     dict_out.close()
