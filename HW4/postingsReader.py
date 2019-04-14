@@ -37,7 +37,8 @@ class PostingsList:
 
 class PostingsFilePointers:
     """
-    Holds information from the postings file
+    Holds information from the postings file. Do not use outside this module. 
+    See SearchBackend for methods which you should use.
     """
     def __init__(self, postings_file):
         self.pointers = {}
