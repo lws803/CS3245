@@ -116,12 +116,12 @@ def read_dict(dictionary, postings_file):
     with open(dictionary) as f:
         for line in f:
             data = line.split()
-            if len(data) == 3:
+            if ":" not in line:
                 word, doc_freq, postings_location = data
                 postings_file_ptrs.add_word(word, postings_location, doc_freq)
-            else:
+            else: 
                 doc_id, length, court = line.split(":")
-                postings_file_ptr.add_metadata(doc_id, length, court)
+                postings_file_ptrs.add_metadata(doc_id, length, court)
     return postings_file_ptrs
 
 
