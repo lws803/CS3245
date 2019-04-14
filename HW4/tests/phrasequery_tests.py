@@ -2,7 +2,7 @@ import unittest
 
 from nltk import word_tokenize
 
-from postingsReader import two_way_merge, SearchBackend
+from postingsReader import two_way_merge, SearchBackend, union
 from index import preprocess
 
 
@@ -33,8 +33,7 @@ class TestTwoWayMerge(unittest.TestCase):
 
 class MockPostingsFilePointers:
     def __init__(self):
-        keys = preprocess(word_tokenize("I am hungry"))
-        print(keys)
+        keys = preprocess(word_tokenize("Bob is hungry"))
         self.dict = {
             keys[0]: [(0, 1), (1, 5), (6, 3)],
             keys[1]: [(1, 4), (6, 4)],
@@ -51,14 +50,40 @@ class PhraseQueryTest(unittest.TestCase):
     def test_phrase_query(self):
         postings = MockPostingsFilePointers()
         backend = SearchBackend(postings)
-        result = backend.phrase_query("I am hungry")
+        result = backend.phrase_query("Bob is hungry")
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0][0], 6)
-        result = backend.phrase_query("hungry am I")
+        result = backend.phrase_query("hungry is Bob")
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0][0], 1)
-        result = backend.phrase_query("hungry am")
+        result = backend.phrase_query("hungry is Bob")
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0][0], 1)
         result = backend.phrase_query("bob has no clue")
         self.assertEqual(len(result), 0)
+        result = backend.phrase_query("hungry")
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0][0], 1)
+        self.assertEqual(result[1][0], 6)
+
+
+class UnionTest(unittest.TestCase):
+    def test_union(self):
+        array1, array2 = [(0, 1), (1, 2)], [(1, 3)]
+        self.assertEqual(union(array1, array2), array1)
+        array1, array2 = [(0, 1), (1, 2)], [(1, 3), (2, 4)]
+        self.assertEqual(union(array1, array2), [(0, 1), (1, 2), (2, 4)])
+        self.assertEqual(union(array1, array1), array1)
+        self.assertEqual(union(array1, []), array1)
+        self.assertEqual(union([], []), [])
+
+class GetTFTest(unittest.TestCase):
+    def test_tf(self):
+        postings = MockPostingsFilePointers()
+        backend = SearchBackend(postings)
+        result = backend.get_tf("bob", [0,2,6])
+        self.assertEqual({0:1, 2:0, 6:1}, result)
+        
+
+if __name__ == '__main__':
+    unittest.main()

@@ -81,7 +81,8 @@ class PostingsFilePointers:
         """
         if word not in self.pointers:
             return []
-        return PostingsList(self.pointers[word], self.doc_freqs[word], self.postings_file)
+        return PostingsList(self.pointers[word], 
+                            self.doc_freqs[word], self.postings_file)
 
     def add_metadata(self, doc_id, length, court):
         self.metadata[doc_id] = {"length": length, "cout": court}
@@ -121,7 +122,8 @@ def two_way_merge(array1, array2, offset=0, use_offset=False):
     Performs a conjunction (and operation) of pairs of ordered indices with positional index.
     :param array1: A sorted list consisting of tuples with format (doc_id, pos_index, ...)
     :param array2: Another sorted list with tuples in the same format as array 1
-    :param offset: The difference in positional index between the item in array1 and array2 (array1 - array2)
+    :param offset: The difference in positional index between the item in array1 
+        and array2 (array1 - array2)
     :param use_offset: Tells the function whether to use the offset for merging or not. If set to false, then
         will simply ignore positional index
     :return: the merged list
@@ -282,28 +284,26 @@ class SearchBackend:
     def get_tf(self, term, documents):
         """
         Returns TF of term in document list
-        :param term:
-        :param document: A sorted list of doc ids
-        :return:
+        :param term: term after preprocessing to be looked up
+        :param documents: A sorted list of doc ids
+        :return: dict containing the tf of document {<doc_id>: <tf>}
         """
         postings = self.postings.get_postings_list(term)
-        count = 0
         counts = {}
-        for doc_id, position, zone in postings:
-
-            if len(documents) == 0:
-                break
-
-            if doc_id == documents[0]:
-                count += 1
-
-            elif doc_id > documents[0]:
-                if count != 0:
-                    counts[doc_id] = count
-                    count = 0
-                documents.pop(0)
-
-        return count
+        for doc in documents:
+            counts[doc] = 0
+        
+        postings_index = 0
+        doc_index = 0
+        while doc_index < len(documents) and postings_index < len(postings):
+            if documents[doc_index] == postings[postings_index][0]:
+                counts[documents[doc_index]] += 1
+                postings_index += 1
+            elif documents[doc_index] > postings[postings_index][0]:
+                postings_index += 1
+            elif documents[doc_index] < postings[postings_index][0]:
+                doc_index += 1
+        return counts
 
 if __name__ == "__main__":
     dictionary_file = postings_file = file_of_queries = file_of_output = None
