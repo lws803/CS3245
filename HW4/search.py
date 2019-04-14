@@ -6,7 +6,8 @@ import getopt
 import os
 import numpy as np
 from queryReader import Query
-
+from postingsReader import *
+from math import log
 
 
 # Parameters 
@@ -44,19 +45,27 @@ if dictionary_file == None or postings_file == None or file_of_queries == None o
 
 
 if __name__ == "__main__":
-    dictionary = open(dictionary_file, 'r')
     output = open(file_of_output, 'w')
-    postings = os.open(postings_file, os.O_RDONLY)
     queries = open(file_of_queries, 'r')
+
+    postings_file_ptr = read_dict(dictionary_file, postings_file)
+    search = SearchBackend(postings_file_ptr)
 
     for line in queries.readlines():
         query = Query(line)
-        print (query).is_boolean
+        print query.is_boolean
+        if not query.is_boolean:
+            print query.tf_q
+            tf_idf = {}
+            # Sample tf-idf of a query
+            N = postings_file_ptr.get_number_of_docs() # Total number of docs
+            for word in query.tf_q:
+                try:
+                    tf_idf[word] = (1+log(query.tf_q[word]))*search.get_idf(word)
+                except KeyError:
+                    tf_idf[word] = 0
+            print tf_idf
         break
 
-
-
     queries.close()
-    dictionary.close()
     output.close()
-    os.close(postings)

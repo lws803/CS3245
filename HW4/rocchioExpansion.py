@@ -25,6 +25,9 @@ class RocchioExpansion:
         total_sum = {}
         for doc in doc_list:
             score_table = generateTable(doc) # Obtain the tf-idf score of documents here for all words in the form of dictionary
+            # TODO: Replace generateTable or use the original function 
+            # to only calculate the vector space for words present in query
+            
             for term in score_table:
                 if term in total_sum:
                     total_sum[term] += score_table[term]
