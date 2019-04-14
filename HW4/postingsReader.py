@@ -120,7 +120,7 @@ def read_dict(dictionary, postings_file):
                 word, doc_freq, postings_location = data
                 postings_file_ptrs.add_word(word, postings_location, doc_freq)
             else:
-                doc_id, length, court = data.split(":")
+                doc_id, length, court = line.split(":")
                 postings_file_ptr.add_metadata(doc_id, length, court)
     return postings_file_ptrs
 
