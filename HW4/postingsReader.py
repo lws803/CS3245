@@ -305,6 +305,12 @@ class SearchBackend:
                 doc_index += 1
         return counts
 
+    def get_doc_freq(self, term):
+        """
+        Returns the document frequency of a term
+        """
+        return self.postings.get_doc_freq(term)
+
 if __name__ == "__main__":
     dictionary_file = postings_file = file_of_queries = file_of_output = None
 
