@@ -4,7 +4,7 @@ import sys
 from struct import unpack
 from nltk import word_tokenize
 from index import preprocess
-
+from math import log
 
 class PostingsList:
     """
@@ -96,6 +96,12 @@ class PostingsFilePointers:
         """
         return self.metadata[doc_id]
 
+    def get_number_of_docs(self):
+        """
+        Returns number of docs
+        """
+        return len(self.metadata)
+
     def __del__(self):
         self.postings_file.close()
 
@@ -114,7 +120,8 @@ def read_dict(dictionary, postings_file):
                 word, doc_freq, postings_location = data
                 postings_file_ptrs.add_word(word, postings_location, doc_freq)
             else:
-                pass
+                doc_id, length, court = data.split(":")
+                postings_file_ptr.add_metadata(doc_id, length, court)
     return postings_file_ptrs
 
 
@@ -306,11 +313,11 @@ class SearchBackend:
                 doc_index += 1
         return counts
 
-    def get_doc_freq(self, term):
+    def get_idf(self, term):
         """
-        Returns the document frequency of a term
+        Returns the idf of a term
         """
-        return self.postings.get_doc_freq(term)
+        return log(self.postings.get_number_of_docs) - log(self.postings.get_doc_freq(term))
 
 if __name__ == "__main__":
     dictionary_file = postings_file = file_of_queries = file_of_output = None
