@@ -296,21 +296,31 @@ class SearchBackend:
         :param documents: A sorted list of doc ids
         :return: dict containing the tf of document {<doc_id>: <tf>}
         """
-        postings = self.postings.get_postings_list(term)
+        postings = iter(self.postings.get_postings_list(term))
+        #print list(postings)
         counts = {}
         for doc in documents:
             counts[doc] = 0
         
-        postings_index = 0
+        end_postings = False
         doc_index = 0
-        while doc_index < len(documents) and postings_index < len(postings):
-            if documents[doc_index] == postings[postings_index][0]:
-                counts[documents[doc_index]] += 1
-                postings_index += 1
-            elif documents[doc_index] > postings[postings_index][0]:
-                postings_index += 1
-            elif documents[doc_index] < postings[postings_index][0]:
-                doc_index += 1
+
+        try:
+            postings_item = next(postings)
+        except StopIteration as s:
+            end_postings = True
+        
+        try:
+            while doc_index < len(documents) and not end_postings:
+                if documents[doc_index] == postings_item[0]:
+                    counts[documents[doc_index]] += 1
+                    postings_item = next(postings) 
+                elif documents[doc_index] > postings_item[0]:
+                    postings_item = next(postings)
+                elif documents[doc_index] < postings_item[0]:
+                    doc_index += 1
+        except StopIteration as s:
+            pass
         return counts
 
     def get_idf(self, term):
