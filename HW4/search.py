@@ -51,6 +51,12 @@ if __name__ == "__main__":
     postings_file_ptr = read_dict(dictionary_file, postings_file)
     search = SearchBackend(postings_file_ptr)
 
+    # Obtaining docs for word "good"
+    for doc in postings_file_ptr.get_postings_list("good"):
+        print doc # Format: DocID, position
+
+    print search.get_tf("good", [246400])
+    
     for line in queries.readlines():
         query = Query(line)
         print query.is_boolean
@@ -64,8 +70,12 @@ if __name__ == "__main__":
                     tf_idf[word] = (1+log(query.tf_q[word]))*search.get_idf(word)
                 except KeyError:
                     tf_idf[word] = 0
-            print tf_idf
+            # print tf_idf
+            for word in query.tf_q:
+                for doc in postings_file_ptr.get_postings_list(word):
+                    print word, search.get_tf(word, [doc])
         break
+
 
     queries.close()
     output.close()

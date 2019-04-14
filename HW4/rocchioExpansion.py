@@ -17,33 +17,34 @@ class RocchioExpansion:
     def __init__ (self):
         pass
 
-
-    def get_centroid(self, doc_list):
+    def get_centroid(self, tf_doc, score_table_query):
         """
         Get the centroid of a document list. To be used for top_k relevant documents
+        tf_doc is the term frequency for a doc for a term
+        Need to obtain by calling get_tf(word, docs) for words in the query and docs in the doc_list returned by top_k
         """
         total_sum = {}
-        for doc in doc_list:
-            score_table = generateTable(doc) # Obtain the tf-idf score of documents here for all words in the form of dictionary
-            # TODO: Replace generateTable or use the original function 
-            # to only calculate the vector space for words present in query
-            
-            for term in score_table:
+        for term in score_table_query:
+            for doc in tf_doc:
+                score = 0
+                if term in tf_doc[doc]:
+                    score = 1 + math.log(tf_doc[doc][term])
+
                 if term in total_sum:
-                    total_sum[term] += score_table[term]
+                    total_sum[term] += score
                 else:
-                    total_sum[term] = score_table[term]
-        
+                    total_sum[term] = score
+
         centroid = {}
         for term in total_sum:
-            centroid[term] = total_sum[term]/len(doc_list)
+            centroid[term] = total_sum[term]/len(tf_doc)
     
         return centroid
 
 
-    def get_rocchio_table(self, top_k, score_table_query):
+    def get_rocchio_table(self, tf_doc, score_table_query):
         original_query_space =  score_table_query # Obtain tf-idf of the query generated from queryReader
-        centroid_relevant = self.get_centroid (top_k)
+        centroid_relevant = self.get_centroid (tf_doc, score_table_query)
         query_modified = {}
         for term in score_table_query:
             query_modified[term] = ALPHA*original_query_space[term] + \
