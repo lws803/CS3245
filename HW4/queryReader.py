@@ -63,6 +63,10 @@ class Query:
 
 
     def __get_tf (self, query_string):
+        """
+        Obtains the term frequency for preprocessed query terms. Use this to find the idf as well.
+        Since we can extract the different words of this query from that tf_q
+        """
         term_list = preprocess(word_tokenize(query_string))
         for i in range(0, len(term_list)):
             token = str(term_list[i])
@@ -70,15 +74,6 @@ class Query:
                 self.tf_q[token] = 1
             else:
                 self.tf_q[token] += 1
-
-
-    def get_tf_idf(self, dictionary, total_docs):
-        tf_idf = {}
-        for token in self.tf_q.keys():
-            if (token in dictionary):
-                tf_idf[token] = ((1+math.log10(tf_idf[token]))* \
-                    (math.log10(total_docs/float(dictionary[token][0]))))
-        return tf_idf
 
 
 if __name__ == "__main__":
