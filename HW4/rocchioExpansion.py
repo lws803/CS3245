@@ -17,7 +17,6 @@ class RocchioExpansion:
     def __init__ (self):
         pass
 
-
     def get_centroid(self, doc_list):
         """
         Get the centroid of a document list. To be used for top_k relevant documents
@@ -40,7 +39,6 @@ class RocchioExpansion:
     
         return centroid
 
-
     def get_rocchio_table(self, top_k, score_table_query):
         original_query_space =  score_table_query # Obtain tf-idf of the query generated from queryReader
         centroid_relevant = self.get_centroid (top_k)
@@ -54,8 +52,6 @@ class RocchioExpansion:
                 query_modified[term] = 0
             
         return query_modified
-
-
 
 if __name__ == "__main__":
     dictionary_file = postings_file = file_of_queries = file_of_output = None
@@ -77,7 +73,3 @@ if __name__ == "__main__":
             file_of_output = a
         else:
             assert False, "unhandled option"
-
-
-    
-
