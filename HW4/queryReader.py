@@ -4,6 +4,7 @@ import sys
 from struct import unpack
 from nltk import word_tokenize
 from nltk.stem.porter import PorterStemmer
+from nltk.corpus import wordnet
 from index import preprocess
 import math
 import re
@@ -21,6 +22,7 @@ class Query:
         self.orig_query = chomp(query)
         self.tf_q = {}
         self.processed_queries = None
+        self.synonyms = {}
 
         self.is_boolean, out = self.__identify_query(chomp(query))
         if (self.is_boolean == True):
@@ -72,6 +74,11 @@ class Query:
             token = str(term_list[i])
             if token not in self.tf_q:
                 self.tf_q[token] = 1
+                # Process synonyms for terms in the query words
+                self.synonyms[token] = set([])
+                for syn in wordnet.synsets(token):
+                    for l in syn.lemmas():
+                        self.synonyms[token].add(l.name())
             else:
                 self.tf_q[token] += 1
 
@@ -105,5 +112,7 @@ if __name__ == "__main__":
             print (processed_query.processed_queries)
         else:
             print (processed_query.tf_q)
+            for item in processed_query.synonyms:
+                print item + ":", processed_query.synonyms[item]
             # TODO: Test out tf_idf as well
         break
