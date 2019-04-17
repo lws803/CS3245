@@ -21,8 +21,8 @@ PERFORM_STEMMING = True # Adding an option to perform stemming on the current te
 
 stemmer = PorterStemmer()
 
-postings_file_ptr = read_dict(dictionary_file, postings_file)
-search = SearchBackend(postings_file_ptr)
+postings_file_ptr = None
+search = None
 
 def get_tf_idf_query():
     # LNC.LTC scheme
@@ -119,7 +119,10 @@ if dictionary_file == None or postings_file == None or file_of_queries == None o
 if __name__ == "__main__":
     output = open(file_of_output, 'w')
     queries = open(file_of_queries, 'r')
-    
+
+    postings_file_ptr = read_dict(dictionary_file, postings_file)
+    search = SearchBackend(postings_file_ptr)
+
     for line in queries.readlines():
         query = Query(line)
         
