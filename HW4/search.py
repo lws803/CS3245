@@ -24,20 +24,21 @@ stemmer = PorterStemmer()
 postings_file_ptr = read_dict(dictionary_file, postings_file)
 search = SearchBackend(postings_file_ptr)
 
-def ranked_retrieval(query):
+def get_tf_idf_query():
     # LNC.LTC scheme
     tf_idf_query = {}
-    
+
     # Sample tf-idf of a query
     for word in query.tf_q:
         try:
             tf_idf_query[word] = (1+log(query.tf_q[word]))*search.get_idf(word)
         except KeyError:
             tf_idf_query[word] = 0
-    doc_list = []
+    
+    return tf_idf_query
+
+def get_doc_tf(doc_list):
     doc_tf = {}
-    for doc in deduplicate_results(search.free_text_query(line)):
-        doc_list.append(doc[0])
     for word in query.tf_q:
         tf_doc = search.get_tf(word, doc_list)
         for doc in doc_list:
@@ -48,8 +49,11 @@ def ranked_retrieval(query):
             else:
                 doc_tf[doc][word] = 0
 
-    # Calculate tf_idn of docs
+    return doc_tf
+
+def calculate_scores(doc_tf, tf_idf_query):
     scores = {}
+
     for doc in doc_tf:
         tf_idn_doc = np.array(doc_tf[doc].values())
         tf_idf_q = np.array(tf_idf_query.values())
@@ -59,6 +63,21 @@ def ranked_retrieval(query):
         tf_idn_doc = tf_idn_doc.reshape(len(tf_idn_doc), 1)
         score = np.dot(tf_idf_q, tf_idn_doc)[0]
         scores[doc] = score
+    
+    return scores
+
+def ranked_retrieval(query):
+    tf_idf_query = get_tf_idf_query()
+    
+    doc_list = []
+    for doc in deduplicate_results(search.free_text_query(line)):
+        doc_list.append(doc[0])
+
+    doc_tf = get_doc_tf(doc_list)
+
+    # Calculate tf_idn of docs
+    scores = calculate_scores(doc_tf, tf_idf_query)
+
     sorted_list = []
     for key in scores:
         sorted_list.append((-1*scores[key], key)) 
