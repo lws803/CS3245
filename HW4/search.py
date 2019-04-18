@@ -150,17 +150,20 @@ if __name__ == "__main__":
             query_string = line
 
     if query.is_boolean: # Boolean retrieval
+        # TODO: For boolean retrieval, decide if we need to consider the initial given docs as well,
+        # but if so, they do not contain any offset value (not a tuple)
         for subquery in query.processed_queries:
             if len(subquery) > 1:
+                if len(relevant_docs) == 0:
+                    relevant_docs = search.phrase_query(subquery)
                 query = Query(' '.join(subquery))
-
                 relevant_docs = two_way_merge(relevant_docs, search.phrase_query(subquery))
-                # Shall we append here instead
-        
             else:
-                relevant_docs = two_way_merge(relevant_docs, postings_file_ptr.get_postings_list(subquery[0]))
-                # Shall we append here instead to take into account the initial relevant docs given by the query?
+                if len(relevant_docs) == 0:
+                    relevant_docs = deduplicate_results(search.free_text_query(subquery[0]))
+                relevant_docs = two_way_merge(relevant_docs, deduplicate_results(search.free_text_query(subquery[0])))
 
+        print relevant_docs
         # After performing AND operations on the query, rank the relevant_docs list generated
         # relevant_docs = ranked_retrieval_boolean(relevant_docs)
     else: # Free text retrieval
@@ -198,7 +201,6 @@ if __name__ == "__main__":
 
         # TODO: Reindex and lift the limit
         # TODO: Output baseline ranked retrieval results without the rocchio expansion to file and upload to CS3245 site
-        # TODO: Integrate Arjo's phrasal queries and union method to find the docs containing those words
 
     queries.close()
     output.close()
