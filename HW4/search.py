@@ -25,6 +25,7 @@ stemmer = PorterStemmer()
 
 postings_file_ptr = None
 search = None
+query = None
 
 def get_tf_idf_query():
     # LNC.LTC scheme
@@ -137,8 +138,7 @@ if __name__ == "__main__":
 
     postings_file_ptr = read_dict(dictionary_file, postings_file)
     search = SearchBackend(postings_file_ptr)
-    
-    query = None
+
     query_string = None
     relevant_docs = []
     for line in queries.readlines():
@@ -156,7 +156,7 @@ if __name__ == "__main__":
             if len(subquery) > 1:
                 if len(relevant_docs) == 0:
                     relevant_docs = search.phrase_query(subquery)
-                query = Query(' '.join(subquery))
+
                 relevant_docs = two_way_merge(relevant_docs, search.phrase_query(subquery))
             else:
                 if len(relevant_docs) == 0:
