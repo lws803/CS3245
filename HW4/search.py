@@ -59,8 +59,15 @@ def calculate_scores(doc_tf, tf_idf_query):
     for doc in doc_tf:
         tf_idn_doc = np.array(doc_tf[doc].values())
         tf_idf_q = np.array(tf_idf_query.values())
-        tf_idf_q = tf_idf_q/LA.norm(tf_idf_q)
-        tf_idn_doc = tf_idn_doc/LA.norm(tf_idn_doc) 
+        
+        normalise_tf_idf_q = LA.norm(tf_idf_q)
+        normalise_tf_idn_doc = LA.norm(tf_idn_doc)
+        
+        if normalise_tf_idf_q != 0:
+            tf_idf_q /= normalise_tf_idf_q
+        if normalise_tf_idn_doc != 0:
+            tf_idn_doc /= normalise_tf_idn_doc
+        
         # TODO: Need to verify this, do we need to multiply by total number of words in that doc?
         tf_idn_doc = tf_idn_doc.reshape(len(tf_idn_doc), 1)
         score = np.dot(tf_idf_q, tf_idn_doc)[0]
@@ -165,6 +172,10 @@ if __name__ == "__main__":
         for term in sorted(rocchio_table.items(), key = lambda kv:(kv[1], kv[0]), reverse=True):
             print (term)
             if (term[1] < ROCCHIO_SCORE_THRESH): break
+
+        # TODO: Reindex and lift the limit
+        # TODO: Output baseline ranked retrieval results without the rocchio expansion to file and upload to CS3245 site
+        # TODO: Integrate Arjo's phrasal queries and union method to find the docs containing those words
 
     queries.close()
     output.close()

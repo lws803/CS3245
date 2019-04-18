@@ -15,7 +15,7 @@ import sys
 import re
 from math import log
 
-LIMIT = 50
+LIMIT = 0
 COUNT = 0
 STEMMER = PorterStemmer()
 
@@ -128,7 +128,7 @@ def indexing(dataset_file, output_dictionary, output_postings):
         content = content.decode('utf8')
         tokenized_words = word_tokenize(content)
         tokenized_words = preprocess(tokenized_words)
-        tokenized_title = word_tokenize(zoned_data[doc_id]['title'])
+        tokenized_title = word_tokenize(zoned_data[doc_id]['title'].decode('utf8'))
         tokenized_title = preprocess_title(tokenized_title)
 
         doc_word_listing[doc_id] = set(tokenized_words+tokenized_title)
