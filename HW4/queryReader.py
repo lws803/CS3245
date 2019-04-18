@@ -56,20 +56,25 @@ class Query:
                     if (split_word[i] != "AND"):
                         out.append(preprocess([split_word[i]]))
                     i += 1
+
+            # Flattens the out list so we can get a tf_q
+            flat_term_list = [item for sublist in out for item in sublist]
+            self.__get_tf(flat_term_list)
             return True, out
         else:
             # pre process as per normal
-            self.__get_tf(query_string)
+            self.__get_tf(self.__get_term_list(query_string))
             return False, None
 
+    def __get_term_list (self, query_string):
+        term_list = preprocess(word_tokenize(query_string))
+        return term_list
 
-
-    def __get_tf (self, query_string):
+    def __get_tf (self, term_list):
         """
         Obtains the term frequency for preprocessed query terms. Use this to find the idf as well.
         Since we can extract the different words of this query from that tf_q
         """
-        term_list = preprocess(word_tokenize(query_string))
         for i in range(0, len(term_list)):
             token = str(term_list[i])
             if token not in self.tf_q:

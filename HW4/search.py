@@ -164,6 +164,7 @@ if __name__ == "__main__":
                 relevant_docs = two_way_merge(relevant_docs, deduplicate_results(search.free_text_query(subquery[0])))
 
         print relevant_docs
+        print query.tf_q
         # After performing AND operations on the query, rank the relevant_docs list generated
         # relevant_docs = ranked_retrieval_boolean(relevant_docs)
     else: # Free text retrieval
