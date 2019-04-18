@@ -44,6 +44,7 @@ class PostingsFilePointers:
         self.pointers = {}
         self.doc_freqs = {}
         self.metadata = {}
+        self.words_in_docs = {}
         self.postings_file = open(postings_file, "rb")
 
     def add_word(self, word, pointer, freq):
@@ -102,6 +103,12 @@ class PostingsFilePointers:
         """
         return len(self.metadata)
 
+    def get_words_in_doc(self, doc):
+        return self.words_in_docs[doc]
+
+    def add_words_to_doc(self, doc, words):
+        self.words_in_docs[doc] = words
+
     def __del__(self):
         self.postings_file.close()
 
@@ -116,12 +123,15 @@ def read_dict(dictionary, postings_file):
     with open(dictionary) as f:
         for line in f:
             data = line.split()
-            if ":" not in line:
+            if ":" not in line and "^" not in line:
                 word, doc_freq, postings_location = data
                 postings_file_ptrs.add_word(word, postings_location, doc_freq)
-            else: 
+            elif ":" in line: 
                 doc_id, length, court = line.split(":")
                 postings_file_ptrs.add_metadata(doc_id, length, court)
+            else:
+                words_in_docs = line.split("^")
+                postings_file_ptrs.add_words_to_doc(int(words_in_docs[0]), words_in_docs[1:])
     return postings_file_ptrs
 
 
@@ -329,6 +339,12 @@ class SearchBackend:
         """
         return log(self.postings.get_number_of_docs()) - log(self.postings.get_doc_freq(term))
 
+    def get_words_in_doc(self, doc_id):
+        """
+        Returns the words in a doc
+        """
+        return self.postings.get_words_in_doc(doc_id)
+
 if __name__ == "__main__":
     dictionary_file = postings_file = file_of_queries = file_of_output = None
 
@@ -352,4 +368,6 @@ if __name__ == "__main__":
 
     postings_file_ptr = read_dict(dictionary_file, postings_file)
     search = SearchBackend(postings_file_ptr)
-    print(list(search.phrase_query("Sim Cheng Ho")))
+    res = list(search.phrase_query("Sim Cheng Ho"))
+    print res
+    print search.get_words_in_doc(res[0][0])

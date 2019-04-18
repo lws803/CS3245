@@ -121,16 +121,17 @@ def indexing(dataset_file, output_dictionary, output_postings):
         if LIMIT and COUNT == LIMIT:
             break
     doc_ids.sort()
-
     dictionary = {}
+    doc_word_listing = {} # For Rocchio algorithm
     for doc_id in doc_ids:
         content = parsed_data[doc_id]
         content = content.decode('utf8')
         tokenized_words = word_tokenize(content)
         tokenized_words = preprocess(tokenized_words)
-
         tokenized_title = word_tokenize(zoned_data[doc_id]['title'])
         tokenized_title = preprocess_title(tokenized_title)
+
+        doc_word_listing[doc_id] = set(tokenized_words+tokenized_title)
 
         # For (i, title/content), let 'title' = 0, 'content' = 1
 
@@ -179,11 +180,16 @@ def indexing(dataset_file, output_dictionary, output_postings):
 
     # Writing total doc weights and court-zone data to end of dictionary file
     vector_data = ""
+    rochhio_data = ""
     vector_quantities = sorted(vector_space_model.items())
     for docId, value in vector_quantities:
         vector_data += str(docId) + ":" + str(value) + ":" + zoned_data[doc_id]['court'] + "\n"
+        word_list = ""
+        for word in doc_word_listing[docId]:
+            word_list += word + "^"
+        rochhio_data += str(docId)+ "^" + word_list  +"\n"
     dict_out.write(vector_data)
-
+    dict_out.write(rochhio_data)
     dict_out.close()
     postings_out.close()
 
