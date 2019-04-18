@@ -75,7 +75,7 @@ def calculate_scores(doc_tf, tf_idf_query):
     
     return scores
 
-def calculate_ranked_scores(doc_list):
+def calculate_ranked_scores(doc_list, tf_idf_query):
     doc_tf = get_doc_tf(doc_list)
 
     # Calculate tf_idn of docs
@@ -96,9 +96,10 @@ def ranked_retrieval(query, query_line):
     for doc in deduplicate_results(search.free_text_query(query_line)):
         doc_list.append(doc[0])
 
-    sorted_list = calculate_ranked_scores(doc_list)
+    sorted_list = calculate_ranked_scores(doc_list, tf_idf_query)
     return sorted_list
 
+# TODO: Fix issue with retrieving tf_idf_query values
 def ranked_retrieval_boolean(doc_list):
     sorted_list = calculate_ranked_scores(doc_list)
     return sorted_list
@@ -161,7 +162,7 @@ if __name__ == "__main__":
                 # Shall we append here instead to take into account the initial relevant docs given by the query?
 
         # After performing AND operations on the query, rank the relevant_docs list generated
-        relevant_docs = ranked_retrieval_boolean(relevant_docs)
+        # relevant_docs = ranked_retrieval_boolean(relevant_docs)
     else: # Free text retrieval
         ranked_list = ranked_retrieval(query, query_string)
         for doc in ranked_list:
@@ -194,7 +195,7 @@ if __name__ == "__main__":
         for term in sorted(rocchio_table.items(), key = lambda kv:(kv[1], kv[0]), reverse=True):
             print (term)
             if (term[1] < ROCCHIO_SCORE_THRESH): break
-                
+
         # TODO: Reindex and lift the limit
         # TODO: Output baseline ranked retrieval results without the rocchio expansion to file and upload to CS3245 site
         # TODO: Integrate Arjo's phrasal queries and union method to find the docs containing those words
