@@ -137,6 +137,8 @@ def indexing(dataset_file, output_dictionary, output_postings):
 
         for i in range(len(tokenized_title)):
             title = tokenized_title[i]
+            if len(title) == 0:
+                continue
             if title not in dictionary:
                 dictionary[title] = {}
             if doc_id not in dictionary[title]:
@@ -145,6 +147,8 @@ def indexing(dataset_file, output_dictionary, output_postings):
 
         for i in range(len(tokenized_words)):
             term = tokenized_words[i]
+            if len(title) == 0:
+                continue
             if term not in dictionary:
                 dictionary[term] = {}
             if doc_id not in dictionary[term]:
@@ -174,7 +178,8 @@ def indexing(dataset_file, output_dictionary, output_postings):
                 postings_out.write(struct.pack('III', doc_id, *index))
                 extraBytes += (byte_size * 3)
 
-        dict_out.write(term + " " + str(df) + " " + str(byte_offset) + "\n")
+        if len(term) > 0:
+            dict_out.write(term + " " + str(df) + " " + str(byte_offset) + "\n")
         byte_offset += extraBytes
 
 
