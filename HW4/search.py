@@ -161,7 +161,7 @@ if __name__ == "__main__":
         rocchio_table = get_rocchio_table(get_tf_idf_query(), 
             get_centroid(relevant_docs, score_table_docs), 
             universal_vocab)
-        index = 0
+
         for term in sorted(rocchio_table.items(), key = lambda kv:(kv[1], kv[0]), reverse=True):
             print (term)
             if (term[1] < ROCCHIO_SCORE_THRESH): break
