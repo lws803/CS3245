@@ -75,13 +75,7 @@ def calculate_scores(doc_tf, tf_idf_query):
     
     return scores
 
-def ranked_retrieval(query, query_line):
-    tf_idf_query = get_tf_idf_query()
-    
-    doc_list = []
-    for doc in deduplicate_results(search.free_text_query(query_line)):
-        doc_list.append(doc[0])
-
+def calculate_ranked_scores(doc_list):
     doc_tf = get_doc_tf(doc_list)
 
     # Calculate tf_idn of docs
@@ -92,7 +86,21 @@ def ranked_retrieval(query, query_line):
         sorted_list.append((-1*scores[key], key)) 
         # So that the scores can be sorted in descending order and the docs sorted in ascending order
     sorted_list.sort()
+
+    return sorted_list
+
+def ranked_retrieval(query, query_line):
+    tf_idf_query = get_tf_idf_query()
     
+    doc_list = []
+    for doc in deduplicate_results(search.free_text_query(query_line)):
+        doc_list.append(doc[0])
+
+    sorted_list = calculate_ranked_scores(doc_list)
+    return sorted_list
+
+def ranked_retrieval_boolean(doc_list):
+    sorted_list = calculate_ranked_scores(doc_list)
     return sorted_list
 
 def usage():
@@ -151,7 +159,9 @@ if __name__ == "__main__":
             else:
                 relevant_docs = two_way_merge(relevant_docs, postings_file_ptr.get_postings_list(subquery[0]))
                 # Shall we append here instead to take into account the initial relevant docs given by the query?
-    
+
+        # After performing AND operations on the query, rank the relevant_docs list generated
+        relevant_docs = ranked_retrieval_boolean(relevant_docs)
     else: # Free text retrieval
         ranked_list = ranked_retrieval(query, query_string)
         for doc in ranked_list:
@@ -184,9 +194,7 @@ if __name__ == "__main__":
         for term in sorted(rocchio_table.items(), key = lambda kv:(kv[1], kv[0]), reverse=True):
             print (term)
             if (term[1] < ROCCHIO_SCORE_THRESH): break
-
-
-
+                
         # TODO: Reindex and lift the limit
         # TODO: Output baseline ranked retrieval results without the rocchio expansion to file and upload to CS3245 site
         # TODO: Integrate Arjo's phrasal queries and union method to find the docs containing those words
