@@ -166,5 +166,17 @@ if __name__ == "__main__":
             print (term)
             if (term[1] < ROCCHIO_SCORE_THRESH): break
 
+    else:
+        # Boolean queries
+        relevant_docs = []
+        for query in query.processed_queries:
+            if len(query) > 1:
+                relevant_docs = two_way_merge(relevant_docs, search.phrase_query(query))
+            else:
+                results = postings_file_ptr.get_postings_list(query[0])
+                relevant_docs = two_way_merge(relevant_docs, results)
+
+
+
     queries.close()
     output.close()
