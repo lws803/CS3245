@@ -13,11 +13,13 @@ from nltk.stem.porter import PorterStemmer
 from postingsReader import *
 from math import log
 from numpy import linalg as LA
+from collections import Counter
+from rocchioExpansion import generate_table, get_centroid, get_rocchio_table
 
 # Parameters 
-BYTE_WIDTH = 4 # Used in the unpacking of the postings list
-IGNORE_PUNCTUATION = True # Adding an option to strip away all punctuation in a term
-PERFORM_STEMMING = True # Adding an option to perform stemming on the current term
+K_PSEUDO_RELEVANT = 5
+ROCCHIO_SCORE_THRESH = 0.5
+PSEUDO_RELEVANCE_FEEDBACK = True
 
 stemmer = PorterStemmer()
 
@@ -66,11 +68,11 @@ def calculate_scores(doc_tf, tf_idf_query):
     
     return scores
 
-def ranked_retrieval(query):
+def ranked_retrieval(query, query_line):
     tf_idf_query = get_tf_idf_query()
     
     doc_list = []
-    for doc in deduplicate_results(search.free_text_query(line)):
+    for doc in deduplicate_results(search.free_text_query(query_line)):
         doc_list.append(doc[0])
 
     doc_tf = get_doc_tf(doc_list)
@@ -83,9 +85,6 @@ def ranked_retrieval(query):
         sorted_list.append((-1*scores[key], key)) 
         # So that the scores can be sorted in descending order and the docs sorted in ascending order
     sorted_list.sort()
-        
-    for document in sorted_list:
-        print (document[1])
     
     return sorted_list
 
@@ -122,13 +121,50 @@ if __name__ == "__main__":
 
     postings_file_ptr = read_dict(dictionary_file, postings_file)
     search = SearchBackend(postings_file_ptr)
-
+    
+    query = None
+    query_string = None
+    relevant_docs = []
     for line in queries.readlines():
-        query = Query(line)
+        if query is not None:
+            # relevant_docs.append(int(line)) # TODO: Uncomment this only when you have the full postings list
+            pass
+        else:
+            query = Query(line)
+            query_string = line
+
+    if not query.is_boolean:
+        ranked_list = ranked_retrieval(query, query_string)
+        for doc in ranked_list:
+            print doc[1]
         
-        if not query.is_boolean:
-            ranked_list = ranked_retrieval(query)
-        break
+        # Beginning of rocchio expansion
+        index = 0
+        universal_vocab = set(query.tf_q.keys())
+        score_table_docs = {}
+
+        if PSEUDO_RELEVANCE_FEEDBACK:
+            while index < len(ranked_list) and index < K_PSEUDO_RELEVANT:
+                curr_doc = ranked_list[index][1]
+                relevant_docs.append(curr_doc)
+                doc_words = set(Counter(search.get_words_in_doc(curr_doc)).keys())
+                universal_vocab |= doc_words
+                index += 1
+
+        # Second round to get the score table
+        for curr_doc in relevant_docs:
+            doc_words = Counter(search.get_words_in_doc(curr_doc))
+            score_table_docs[curr_doc] = generate_table(doc_words, universal_vocab)
+
+
+        # Obtain table and calculate the scores
+        rocchio_table = get_rocchio_table(get_tf_idf_query(), 
+            get_centroid(relevant_docs, score_table_docs), 
+            universal_vocab)
+        index = 0
+        for term in sorted(rocchio_table.items(), key = lambda kv:(kv[1], kv[0]), reverse=True):
+            print (term)
+            if (term[1] < ROCCHIO_SCORE_THRESH): break
 
     queries.close()
     output.close()

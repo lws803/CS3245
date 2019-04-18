@@ -10,50 +10,50 @@ import math
 ALPHA = 1
 BETA = 0.75
 
-class RocchioExpansion:
-    """
-    Holds the interface for methods to obtain the rocchio table and suggested query.
-    """
-    def __init__ (self):
-        pass
 
-    def get_centroid(self, tf_doc, score_table_query):
-        """
-        Get the centroid of a document list. To be used for top_k relevant documents
-        tf_doc is the term frequency for a doc for a term
-        Need to obtain by calling get_tf(word, docs) for words in the query and docs in the doc_list returned by top_k
-        """
-        total_sum = {}
-        for term in score_table_query:
-            for doc in tf_doc:
-                score = 0
-                if term in tf_doc[doc]:
-                    score = 1 + math.log(tf_doc[doc][term])
+def generate_table (table, universal_vocab):
+    vector = {}
+    for term in universal_vocab:
+        if (term in table):
+            # TF no IDF
+            vector[term] = 1 + math.log(table[term])
+        else:
+            vector[term]= 0
+        
+    return vector
 
-                if term in total_sum:
-                    total_sum[term] += score
-                else:
-                    total_sum[term] = score
-
-        centroid = {}
-        for term in total_sum:
-            centroid[term] = total_sum[term]/len(tf_doc)
+def get_centroid(docs_list, score_table_docs):
+    total_sum = {}
+    for doc in docs_list:
+        score_table = score_table_docs[doc]
+        for term in score_table:
+            if term in total_sum:
+                total_sum[term] += score_table[term]
+            else:
+                total_sum[term] = score_table[term]
     
-        return centroid
+    centroid = {}
+    for term in total_sum:
+        centroid[term] = total_sum[term]/len(docs_list)
+    
+    return centroid
 
-    def get_rocchio_table(self, tf_doc, score_table_query):
-        original_query_space =  score_table_query # Obtain tf-idf of the query generated from queryReader
-        centroid_relevant = self.get_centroid (tf_doc, score_table_query)
-        query_modified = {}
-        for term in score_table_query:
+
+def get_rocchio_table(score_table_query, centroid_relevant, universal_vocab):
+    original_query_space =  score_table_query # Obtain tf-idf of the query generated from queryReader
+    query_modified = {}
+    for term in universal_vocab:
+        if term in original_query_space:
             query_modified[term] = ALPHA*original_query_space[term] + \
             BETA*centroid_relevant[term]
-            
-            # Set it to zero if it is negative
-            if (query_modified[term] < 0):
-                query_modified[term] = 0
-            
-        return query_modified
+        else:
+            query_modified[term] = BETA*centroid_relevant[term]
+        
+        # Set it to zero if it is negative
+        if (query_modified[term] < 0):
+            query_modified[term] = 0
+        
+    return query_modified
 
 if __name__ == "__main__":
     dictionary_file = postings_file = file_of_queries = file_of_output = None
