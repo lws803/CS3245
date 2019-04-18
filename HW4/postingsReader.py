@@ -259,14 +259,14 @@ class SearchBackend:
         """
         self.postings = postings_file_pointer
 
-    def phrase_query(self, phrase):
+    def phrase_query(self, words):
         """
         Retrieve an *exact* phrase using the postings list
         :param phrase: A string with *at least* two words
         :return: a sorted list consisting of tuples of type (doc_id, pos_index) [pos index may be ignored after this operation]
         """
-        words = word_tokenize(phrase)
-        words = preprocess(words)
+        # words = word_tokenize(phrase)
+        # words = preprocess(words)
         postings_lists = {}
         word_offset = {}
         offset = 0

@@ -140,38 +140,47 @@ if __name__ == "__main__":
             query = Query(line)
             query_string = line
 
-    if not query.is_boolean:
-        ranked_list = ranked_retrieval(query, query_string)
-        for doc in ranked_list:
-            print doc[1]
-        
-        # Beginning of rocchio expansion
-        index = 0
-        universal_vocab = set(query.tf_q.keys())
-        score_table_docs = {}
+    for subquery in query.processed_queries:
+        if len(subquery) > 1:
+            query = Query(' '.join(subquery))
+            ranked_list = ranked_retrieval(query, query_string)
+            for doc in ranked_list:
+                print doc[1]
 
-        if PSEUDO_RELEVANCE_FEEDBACK:
-            while index < len(ranked_list) and index < K_PSEUDO_RELEVANT:
-                curr_doc = ranked_list[index][1]
-                relevant_docs.append(curr_doc)
-                doc_words = set(Counter(search.get_words_in_doc(curr_doc)).keys())
-                universal_vocab |= doc_words
-                index += 1
+            # Beginning of rocchio expansion
+            index = 0
+            universal_vocab = set(query.tf_q.keys())
+            score_table_docs = {}
 
-        # Second round to get the score table
-        for curr_doc in relevant_docs:
-            doc_words = Counter(search.get_words_in_doc(curr_doc))
-            score_table_docs[curr_doc] = generate_table(doc_words, universal_vocab)
+            if PSEUDO_RELEVANCE_FEEDBACK:
+                while index < len(ranked_list) and index < K_PSEUDO_RELEVANT:
+                    curr_doc = ranked_list[index][1]
+                    relevant_docs.append(curr_doc)
+                    doc_words = set(Counter(search.get_words_in_doc(curr_doc)).keys())
+                    universal_vocab |= doc_words
+                    index += 1
+
+            # Second round to get the score table
+            for curr_doc in relevant_docs:
+                doc_words = Counter(search.get_words_in_doc(curr_doc))
+                score_table_docs[curr_doc] = generate_table(doc_words, universal_vocab)
 
 
-        # Obtain table and calculate the scores
-        rocchio_table = get_rocchio_table(get_tf_idf_query(), 
-            get_centroid(relevant_docs, score_table_docs), 
-            universal_vocab)
+            # Obtain table and calculate the scores
+            rocchio_table = get_rocchio_table(get_tf_idf_query(),
+                get_centroid(relevant_docs, score_table_docs),
+                universal_vocab)
 
-        for term in sorted(rocchio_table.items(), key = lambda kv:(kv[1], kv[0]), reverse=True):
-            print (term)
-            if (term[1] < ROCCHIO_SCORE_THRESH): break
+            for term in sorted(rocchio_table.items(), key = lambda kv:(kv[1], kv[0]), reverse=True):
+                print (term)
+                if (term[1] < ROCCHIO_SCORE_THRESH): break
+
+            relevant_docs = two_way_merge(relevant_docs, search.phrase_query(subquery))
+    
+        else:
+            relevant_docs = two_way_merge(relevant_docs, postings_file_ptr.get_postings_list(subquery[0]))
+
+
 
         # TODO: Reindex and lift the limit
         # TODO: Output baseline ranked retrieval results without the rocchio expansion to file and upload to CS3245 site
