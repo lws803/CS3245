@@ -102,7 +102,7 @@ def ranked_retrieval(query, query_line):
 
 # TODO: Fix issue with retrieving tf_idf_query values
 def ranked_retrieval_boolean(doc_list):
-    sorted_list = calculate_ranked_scores(doc_list)
+    sorted_list = calculate_ranked_scores(doc_list, get_tf_idf_query())
     return sorted_list
 
 def usage():
@@ -165,8 +165,10 @@ if __name__ == "__main__":
 
         print relevant_docs
         print query.tf_q
+        print ranked_retrieval_boolean(relevant_docs) 
+        # TODO: Need to verift this, it outputs a score of zero for a case where it shouldnt be
+
         # After performing AND operations on the query, rank the relevant_docs list generated
-        # relevant_docs = ranked_retrieval_boolean(relevant_docs)
     else: # Free text retrieval
         ranked_list = ranked_retrieval(query, query_string)
         for doc in ranked_list:
