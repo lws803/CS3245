@@ -23,11 +23,7 @@ class Query:
         self.tf_q = {}
         self.processed_queries = None
         self.synonyms = {}
-
-        self.is_boolean, out = self.__identify_query(chomp(query))
-        if (self.is_boolean == True):
-            self.processed_queries = out
-
+        self.is_boolean, self.processed_queries = self.__identify_query(chomp(query))
 
     def __identify_query(self, query_string):
         """
@@ -64,7 +60,7 @@ class Query:
         else:
             # pre process as per normal
             self.__get_tf(self.__get_term_list(query_string))
-            return False, None
+            return False, query_string
 
     def __get_term_list (self, query_string):
         term_list = preprocess(word_tokenize(query_string))

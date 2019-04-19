@@ -105,6 +105,27 @@ def ranked_retrieval_boolean(doc_list):
     sorted_list = calculate_ranked_scores(doc_list, get_tf_idf_query())
     return sorted_list
 
+def handle_query(query):
+    """
+    Returns an unranked query after passing through boolean retrieval
+    :param query:
+    :return:
+    """
+    print query
+    query = Query(query)
+    print query
+    relevant_docs = []
+    for subquery in query.processed_queries:
+        if len(subquery) > 1:
+            if len(relevant_docs) == 0:
+                relevant_docs = search.phrase_query(subquery)
+            relevant_docs = two_way_merge(relevant_docs, search.phrase_query(subquery))
+        else:
+            if len(relevant_docs) == 0:
+                relevant_docs = deduplicate_results(search.free_text_query(subquery[0]))
+            relevant_docs = two_way_merge(relevant_docs, deduplicate_results(search.free_text_query(subquery[0])))
+    return relevant_docs
+
 def usage():
     print ("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
 
@@ -128,20 +149,32 @@ for o, a in opts:
     else:
         assert False, "unhandled option"
 
+
 if dictionary_file == None or postings_file == None or file_of_queries == None or file_of_output == None :
     usage()
     sys.exit(2)
 
 if __name__ == "__main__":
     output = open(file_of_output, 'w')
-    queries = open(file_of_queries, 'r')
 
     postings_file_ptr = read_dict(dictionary_file, postings_file)
     search = SearchBackend(postings_file_ptr)
 
     query_string = None
     relevant_docs = []
-    for line in queries.readlines():
+    query_result = []
+
+    with open(file_of_queries, 'r') as queries:
+        line_count = 0
+        for line in queries:
+            if line_count == 0:
+                query_result = handle_query(line)
+                line_count = 1
+            else:
+                relevant_docs.append(line)
+    print query_result
+    """
+    for line in queries:
         if query is not None:
             # relevant_docs.append(int(line)) # TODO: Uncomment this only when you have the full postings list
             pass
@@ -169,6 +202,8 @@ if __name__ == "__main__":
         # TODO: Need to verift this, it outputs a score of zero for a case where it shouldnt be
 
         # After performing AND operations on the query, rank the relevant_docs list generated
+
+    #(Arjo's comment) There should be no diff between boolean and
     else: # Free text retrieval
         ranked_list = ranked_retrieval(query, query_string)
         for doc in ranked_list:
@@ -205,5 +240,6 @@ if __name__ == "__main__":
         # TODO: Reindex and lift the limit
         # TODO: Output baseline ranked retrieval results without the rocchio expansion to file and upload to CS3245 site
 
-    queries.close()
+    
+    """
     output.close()
