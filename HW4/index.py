@@ -27,6 +27,7 @@ def preprocess_title(titles):
     titles = [t for t in titles if len(t) > 1]
     titles = [t for t in titles if not is_num(t)]
     titles = [t.lower() for t in titles]
+    titles = [str(clean(w)) for w in titles]
     titles = split(titles)
     titles = [STEMMER.stem(t) for t in titles]
     return titles[:-1]    
