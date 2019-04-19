@@ -9,7 +9,6 @@ import math
 import string
 import struct
 from queryReader import Query
-from nltk.stem.porter import PorterStemmer
 from postingsReader import *
 from math import log
 from numpy import linalg as LA
@@ -20,8 +19,6 @@ from rocchioExpansion import generate_table, get_centroid, get_rocchio_table
 K_PSEUDO_RELEVANT = 5
 ROCCHIO_SCORE_THRESH = 0.5
 PSEUDO_RELEVANCE_FEEDBACK = True
-
-stemmer = PorterStemmer()
 
 postings_file_ptr = None
 search = None
