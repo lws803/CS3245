@@ -121,16 +121,22 @@ def read_dict(dictionary, postings_file):
     """
     postings_file_ptrs = PostingsFilePointers(postings_file)
     with open(dictionary) as f:
+        mode = "POSTINGS"
         for line in f:
             data = line.split()
             try:
-                if ":" not in line and "^" not in line:
+                if line == "# BEGIN VECTOR DATA #\n":
+                    print "switching to vector data"
+                    mode = "VSM"
+                elif line == "# BEGIN ROCCHIO DATA #\n":
+                    mode = "ROCHIO"
+                elif mode == "POSTINGS":
                     word, doc_freq, postings_location = data
                     postings_file_ptrs.add_word(word, postings_location, doc_freq)
-                elif "^" in line:
+                elif mode == "ROCHIO":
                     words_in_docs = line.split("^")
                     postings_file_ptrs.add_words_to_doc(int(words_in_docs[0]), words_in_docs[1:])
-                elif ":" in line:
+                elif mode == "VSM":
                     doc_id, length, court = line.split(":")
                     postings_file_ptrs.add_metadata(doc_id, length, court)
 
@@ -138,6 +144,8 @@ def read_dict(dictionary, postings_file):
                 print "Warning: Incorrect parsing occured"
                 print E
                 print line
+                print mode
+                exit()
     return postings_file_ptrs
 
 

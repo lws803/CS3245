@@ -15,7 +15,7 @@ import sys
 import re
 from math import log
 
-LIMIT = 0
+LIMIT = 100
 COUNT = 0
 STEMMER = PorterStemmer()
 
@@ -194,7 +194,9 @@ def indexing(dataset_file, output_dictionary, output_postings):
         for word in doc_word_listing[docId]:
             word_list += word + "^"
         rochhio_data += str(docId)+ "^" + word_list  +"\n"
+    dict_out.write("# BEGIN VECTOR DATA #\n")
     dict_out.write(vector_data)
+    dict_out.write("# BEGIN ROCCHIO DATA #\n")
     dict_out.write(rochhio_data)
     dict_out.close()
     postings_out.close()
