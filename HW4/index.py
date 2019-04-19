@@ -68,9 +68,12 @@ def clean(original_word):
     Remove digits, punctuation, unicode chars in words
     '''
     word = re.sub("\\d", "", original_word)
-    word = word.strip(string.punctuation)
+    word = strip_punctuation(word)
     word = word.encode('utf-8', 'ignore')
     return word.lower()
+
+def strip_punctuation(s):
+    return ''.join(c for c in s if c not in string.punctuation)
 
 def has_weird_chars(word):
     '''
