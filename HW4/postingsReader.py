@@ -127,15 +127,17 @@ def read_dict(dictionary, postings_file):
                 if ":" not in line and "^" not in line:
                     word, doc_freq, postings_location = data
                     postings_file_ptrs.add_word(word, postings_location, doc_freq)
-                elif ":" in line:
-                    print line
-                    doc_id, length, court = line.split(":")
-                    postings_file_ptrs.add_metadata(doc_id, length, court)
-                else:
+                elif "^" in line:
                     words_in_docs = line.split("^")
                     postings_file_ptrs.add_words_to_doc(int(words_in_docs[0]), words_in_docs[1:])
-            except:
+                elif ":" in line:
+                    doc_id, length, court = line.split(":")
+                    postings_file_ptrs.add_metadata(doc_id, length, court)
+
+            except Exception as E:
                 print "Warning: Incorrect parsing occured"
+                print E
+                print line
     return postings_file_ptrs
 
 
