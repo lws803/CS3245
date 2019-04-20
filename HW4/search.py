@@ -12,6 +12,7 @@ from nltk.stem.porter import PorterStemmer
 from nltk.corpus import wordnet
 from nltk import word_tokenize
 from nltk.corpus import wordnet as wn
+from nltk.corpus import stopwords
 
 import numpy as np
 from numpy import linalg as LA
@@ -19,8 +20,8 @@ from numpy import linalg as LA
 from collections import Counter
 
 # Parameters 
-K_PSEUDO_RELEVANT = 5
-ROCCHIO_SCORE_THRESH = 0.5
+K_PSEUDO_RELEVANT = 10
+ROCCHIO_SCORE_THRESH = 0.7
 PSEUDO_RELEVANCE_FEEDBACK = True
 ALPHA = 1
 BETA = 0.75
@@ -130,7 +131,7 @@ class Query:
     Holds information for a query (a single line of query)
     """
     def __init__ (self, query):
-        self.orig_query = chomp(query)
+        self.query_line = chomp(query)
         self.tf_q = {}
         self.processed_queries = None
         self.synonyms = {}
@@ -193,6 +194,19 @@ class Query:
                         self.synonyms[token].add(l.name())
             else:
                 self.tf_q[token] += 1
+
+    def add_suggestions (self, new_terms):
+        """
+        Allows addition of new terms from relevance feedback
+        """
+        for term in new_terms:
+            if new_terms[term] > ROCCHIO_SCORE_THRESH and \
+                term not in self.tf_q and term != "\n" \
+                and term not in preprocess(stopwords.words('english')):
+                
+                self.tf_q[term] = 1 # Add them as one
+                print "accepted:", term
+                self.query_line += " " + term
 
 # -- Postings --
 class PostingsList:
@@ -595,6 +609,8 @@ def calculate_scores(doc_tf, tf_idf_query):
         normalise_tf_idf_q = LA.norm(tf_idf_q)
         # normalise_tf_idn_doc = search.get_document_length(doc)
         normalise_tf_idn_doc = LA.norm(tf_idn_doc) # According to ZJ's tutorial notes, makes more sense
+        # TODO: Verify the difference here on ZJ's scoreboard. See which is better
+        # Watch out for daifuku on server
 
         if normalise_tf_idf_q != 0:
             tf_idf_q /= normalise_tf_idf_q
@@ -636,7 +652,55 @@ def ranked_retrieval_boolean(doc_list, query):
     sorted_list = calculate_ranked_scores(doc_list, get_tf_idf_query(query), query)
     return sorted_list
 
-def handle_query(query_line):
+def rocchio_expansion (query, relevant_docs, legit_relevant_docs):
+    # Beginning of rocchio expansion
+    universal_vocab = set([])
+    score_table_docs = {}
+
+    print "Performing ROCCHIO expansion..."
+    pseudo_relevant_docs = []
+    index = 0
+    for doc in relevant_docs:
+        if (index > K_PSEUDO_RELEVANT):
+            break
+        pseudo_relevant_docs.append(doc)
+        doc_words = set(Counter(search.get_words_in_doc(doc)).keys())
+        
+        # Take only recurring terms among a few documents
+        if len(universal_vocab) == 0:
+            universal_vocab = doc_words
+        universal_vocab &= doc_words
+        index += 1
+    universal_vocab |= set(query.tf_q.keys())
+    
+    # Second round to get the score table
+    for curr_doc in pseudo_relevant_docs:
+        doc_words = Counter(search.get_words_in_doc(curr_doc)) # TODO: Need to filter out \n as well
+        score_table_docs[curr_doc] = generate_table(doc_words, universal_vocab)
+
+    # Obtain table and calculate the scores
+    rocchio_table = get_rocchio_table(get_tf_idf_query(query),
+        get_centroid(pseudo_relevant_docs, score_table_docs),
+        universal_vocab)
+
+    query.add_suggestions(rocchio_table)
+    print query.tf_q
+    print query.query_line
+
+    # TODO: Fix extremely slow process, find out what is wrong, maybe only take recurrent terms among a few documents
+    # TODO: Problem might be from a slow ranked retrieval format. Find out how to fix it
+    relevant_docs = legit_relevant_docs
+    ranked_list = ranked_retrieval(query, query.query_line)
+
+    for doc in ranked_list:
+        if doc[1] not in legit_relevant_docs:
+            print doc[1], -doc[0]
+            relevant_docs.append(doc[1])
+
+    return relevant_docs
+
+
+def handle_query(query_line, legit_relevant_docs):
     """
     Returns an unranked query after passing through boolean retrieval
     :param query:
@@ -659,46 +723,24 @@ def handle_query(query_line):
         flattened_docs = set([])
         for doc in relevant_docs:
             flattened_docs.add(doc[0])
-        
-        relevant_docs = []
-        for doc in ranked_retrieval_boolean(list(flattened_docs), query):
-            print doc[1], -doc[0]
-            relevant_docs.append(doc[1])
-    else:
-        ranked_list = ranked_retrieval(query, query_line)
-        for doc in ranked_list:
-            print doc[1], -doc[0]
-            relevant_docs.append(doc[1])
 
-        """
-        # Beginning of rocchio expansion
-        index = 0
-        universal_vocab = set(query.tf_q.keys())
-        score_table_docs = {}
+        relevant_docs = legit_relevant_docs
+        for doc in ranked_retrieval_boolean(list(flattened_docs), query):
+            # Handle duplicates
+            if doc[1] not in legit_relevant_docs:
+                # print doc[1], -doc[0]
+                relevant_docs.append(doc[1])
+    else:
+        ranked_list = ranked_retrieval(query, query.query_line)
+        relevant_docs = legit_relevant_docs
+        
+        for doc in ranked_list:
+            if doc[1] not in legit_relevant_docs:
+                # print doc[1], -doc[0]
+                relevant_docs.append(doc[1])
 
         if PSEUDO_RELEVANCE_FEEDBACK:
-            while index < len(ranked_list) and index < K_PSEUDO_RELEVANT:
-                curr_doc = ranked_list[index][1]
-                relevant_docs.append(curr_doc)
-                doc_words = set(Counter(search.get_words_in_doc(curr_doc)).keys())
-                universal_vocab |= doc_words
-                index += 1
-
-        # Second round to get the score table
-        for curr_doc in relevant_docs:
-            doc_words = Counter(search.get_words_in_doc(curr_doc))
-            score_table_docs[curr_doc] = generate_table(doc_words, universal_vocab)
-
-
-        # Obtain table and calculate the scores
-        rocchio_table = get_rocchio_table(get_tf_idf_query(),
-            get_centroid(relevant_docs, score_table_docs),
-            universal_vocab)
-
-        for term in sorted(rocchio_table.items(), key = lambda kv:(kv[1], kv[0]), reverse=True):
-            print (term)
-            if (term[1] < ROCCHIO_SCORE_THRESH): break
-        """
+            relevant_docs = rocchio_expansion(query, relevant_docs, legit_relevant_docs)
 
     return relevant_docs
 
@@ -744,18 +786,14 @@ if __name__ == "__main__":
         line_count = 0
         for line in queries:
             if line_count == 0:
-                query_result = handle_query(line)
+                query_string = line
                 line_count = 1
             else:
                 relevant_docs.append(int(line))
 
-    # Reorder and add the relevant docs at the top
-    for doc in relevant_docs:
-        if doc in query_result:
-            query_result.remove(doc)
-        query_result = [doc] + query_result
-    print len(query_result)
+    query_result = handle_query(query_string, relevant_docs)    
     for doc in query_result:
+        print doc
         output.write(str(doc) + " ")
     """
     for line in queries:
