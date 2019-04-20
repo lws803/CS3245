@@ -1,21 +1,21 @@
 #!/usr/bin/python
 import re
-import nltk
 import sys
 import getopt
 import os
-import numpy as np
 import math
 import string
-import struct
 from struct import unpack
-from nltk import word_tokenize
 from math import log
+
 from nltk.stem.porter import PorterStemmer
 from nltk.corpus import wordnet
-from math import log
-from numpy import linalg as LA
+from nltk import word_tokenize
 from nltk.corpus import wordnet as wn
+
+import numpy as np
+from numpy import linalg as LA
+
 from collections import Counter
 
 # Parameters 
@@ -29,12 +29,13 @@ STEMMER = PorterStemmer()
 postings_file_ptr = None
 search = None
 
+# -- Rocchio --
 def generate_table (table, universal_vocab):
     vector = {}
     for term in universal_vocab:
         if (term in table):
             # TF no IDF
-            vector[term] = 1 + math.log(table[term])
+            vector[term] = 1 + log(table[term])
         else:
             vector[term]= 0
         
@@ -73,6 +74,7 @@ def get_rocchio_table(score_table_query, centroid_relevant, universal_vocab):
         
     return query_modified
 
+# -- Index --
 def preprocess(data):
     '''
     Clean data for content before tokenizing
@@ -117,6 +119,7 @@ def has_weird_chars(word):
         if i not in string.printable:
             return True
 
+# -- Query --
 def chomp(x):
     if x.endswith("\r\n"): return x[:-2]
     if x.endswith("\n") or x.endswith("\r"): return x[:-1]
@@ -191,6 +194,7 @@ class Query:
             else:
                 self.tf_q[token] += 1
 
+# -- Postings --
 class PostingsList:
     """
     An iterable that iterates through the on-disk postings list
@@ -552,6 +556,7 @@ class SearchBackend:
         """
         return self.postings.get_words_in_doc(doc_id)
 
+# -- Search --
 def get_tf_idf_query(query):
     # LNC.LTC scheme
     tf_idf_query = {}
@@ -628,7 +633,6 @@ def ranked_retrieval(query, query_line):
     sorted_list = calculate_ranked_scores(doc_list, tf_idf_query, query)
     return sorted_list
 
-# TODO: Fix issue with retrieving tf_idf_query values
 def ranked_retrieval_boolean(doc_list, query):
     sorted_list = calculate_ranked_scores(doc_list, get_tf_idf_query(query), query)
     return sorted_list
@@ -757,14 +761,13 @@ if __name__ == "__main__":
     """
     for line in queries:
         if query is not None:
-            # relevant_docs.append(int(line)) # TODO: Uncomment this only when you have the full postings list
+            # relevant_docs.append(int(line))
             pass
         else:
             query = Query(line)
             query_string = line
 
     if query.is_boolean: # Boolean retrieval
-        # TODO: For boolean retrieval, decide if we need to consider the initial given docs as well,
         # but if so, they do not contain any offset value (not a tuple)
         for subquery in query.processed_queries:
             if len(subquery) > 1:
@@ -780,7 +783,6 @@ if __name__ == "__main__":
         print relevant_docs
         print query.tf_q
         print ranked_retrieval_boolean(relevant_docs) 
-        # TODO: Need to verift this, it outputs a score of zero for a case where it shouldnt be
 
         # After performing AND operations on the query, rank the relevant_docs list generated
 
@@ -817,10 +819,5 @@ if __name__ == "__main__":
         for term in sorted(rocchio_table.items(), key = lambda kv:(kv[1], kv[0]), reverse=True):
             print (term)
             if (term[1] < ROCCHIO_SCORE_THRESH): break
-
-        # TODO: Reindex and lift the limit
-        # TODO: Output baseline ranked retrieval results without the rocchio expansion to file and upload to CS3245 site
-
-    
     """
     output.close()
