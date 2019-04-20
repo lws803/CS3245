@@ -640,10 +640,6 @@ def handle_query(query_line):
     """
     print query_line
     query = Query(query_line)
-
-    # For testing purposes: write all queries to the output file
-    output.write(str(query_line))
-
     relevant_docs = []
 
     if query.is_boolean:
