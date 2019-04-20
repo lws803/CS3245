@@ -135,7 +135,7 @@ def read_dict(dictionary, postings_file):
                     mode = "ROCHIO"
                 elif mode == "POSTINGS":
                     word, doc_freq, postings_length, postings_location = data
-                    postings_file_ptrs.add_word(word, postings_location, postings_length, doc_freq)
+                    postings_file_ptrs.add_word(word, postings_location,  doc_freq, postings_length)
                 elif mode == "ROCHIO":
                     words_in_docs = line.split("^")
                     postings_file_ptrs.add_words_to_doc(int(words_in_docs[0]), words_in_docs[1:])
