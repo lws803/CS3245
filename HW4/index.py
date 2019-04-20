@@ -178,7 +178,7 @@ def indexing(dataset_file, output_dictionary, output_postings):
                 extraBytes += (byte_size * 3)
 
         if len(term) > 0:
-            dict_out.write(term + " " + str(df) + str(doc_post_length) + " " + str(byte_offset) + "\n")
+            dict_out.write(term + " " + str(df) + " " + str(doc_post_length) + " " + str(byte_offset) + "\n")
         byte_offset += extraBytes
 
 

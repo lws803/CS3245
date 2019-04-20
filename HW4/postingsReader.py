@@ -43,21 +43,24 @@ class PostingsFilePointers:
     def __init__(self, postings_file):
         self.pointers = {}
         self.doc_freqs = {}
+        self.postings_length = {}
         self.metadata = {}
         self.words_in_docs = {}
         self.postings_file = open(postings_file, "rb")
 
-    def add_word(self, word, pointer, freq):
+    def add_word(self, word, pointer, freq, postings_length):
         """
         Adds a word to the dictionary pointers. Used by read_dictionary method.
         Should not be called by anything else.
         :param word: Word to store
         :param pointer: pointer to the start address in the postings file
         :param freq: document frequency
+        :param postings_length: The length of the postings for the word
         :return:
         """
         self.pointers[word] = int(pointer)
         self.doc_freqs[word] = int(freq)
+        self.postings_length[word] = int(postings_length)
 
     def get_doc_freq(self, word):
         """
@@ -84,7 +87,7 @@ class PostingsFilePointers:
         if word not in self.pointers:
             return []
         return PostingsList(self.pointers[word], 
-                            self.doc_freqs[word], self.postings_file)
+                            self.postings_length[word], self.postings_file)
 
     def add_metadata(self, doc_id, length, court):
         self.metadata[int(doc_id)] = {"length": float(length), "court": court}
@@ -131,8 +134,8 @@ def read_dict(dictionary, postings_file):
                 elif line == "# BEGIN ROCCHIO DATA #\n":
                     mode = "ROCHIO"
                 elif mode == "POSTINGS":
-                    word, doc_freq, postings_location = data
-                    postings_file_ptrs.add_word(word, postings_location, doc_freq)
+                    word, doc_freq, postings_length, postings_location = data
+                    postings_file_ptrs.add_word(word, postings_location, postings_length, doc_freq)
                 elif mode == "ROCHIO":
                     words_in_docs = line.split("^")
                     postings_file_ptrs.add_words_to_doc(int(words_in_docs[0]), words_in_docs[1:])
@@ -311,7 +314,8 @@ class SearchBackend:
             return []
         res = self.postings.get_postings_list(words.pop())
         while len(words) > 0:
-            res = union(res, self.postings.get_postings_list(words.pop()))
+            posting = self.postings.get_postings_list(words.pop())
+            res = union(res, posting)
         return res
 
     def get_document_length(self, doc_id):
