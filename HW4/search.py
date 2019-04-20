@@ -65,7 +65,7 @@ def calculate_scores(doc_tf, tf_idf_query):
         if normalise_tf_idf_q != 0:
             tf_idf_q /= normalise_tf_idf_q
         # if normalise_tf_idn_doc != 0:
-            # tf_idn_doc /= normalise_tf_idn_doc
+            tf_idn_doc /= normalise_tf_idn_doc
         tf_idn_doc *= len(search.get_words_in_doc(doc)) # TODO: Verify the correctness of this
         # TODO: Do we have to normalise this?
         
