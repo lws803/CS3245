@@ -584,6 +584,7 @@ def calculate_scores(doc_tf, tf_idf_query):
 
     for doc in doc_tf:
         tf_idn_doc = np.array(doc_tf[doc].values())
+        tf_idn_doc = tf_idn_doc.astype(float) # Turn the current 2D array to a float array 
         tf_idf_q = np.array(tf_idf_query.values())
         
         normalise_tf_idf_q = LA.norm(tf_idf_q)
@@ -592,7 +593,7 @@ def calculate_scores(doc_tf, tf_idf_query):
 
         if normalise_tf_idf_q != 0:
             tf_idf_q /= normalise_tf_idf_q
-        # if normalise_tf_idn_doc != 0:
+        if normalise_tf_idn_doc != 0:
             tf_idn_doc /= normalise_tf_idn_doc
         tf_idn_doc *= len(search.get_words_in_doc(doc)) # TODO: Verify the correctness of this
         # TODO: Do we have to normalise this?
@@ -749,7 +750,7 @@ if __name__ == "__main__":
     for doc in relevant_docs:
         if doc in query_result:
             query_result.remove(doc)
-        query_result.append(doc)
+        query_result = [doc] + query_result
     print len(query_result)
     for doc in query_result:
         output.write(str(doc) + " ")
