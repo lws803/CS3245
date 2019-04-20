@@ -593,15 +593,14 @@ def calculate_scores(doc_tf, tf_idf_query):
         tf_idf_q = np.array(tf_idf_query.values())
         
         normalise_tf_idf_q = LA.norm(tf_idf_q)
-        normalise_tf_idn_doc = search.get_document_length(doc)
-
+        # normalise_tf_idn_doc = search.get_document_length(doc)
+        normalise_tf_idn_doc = LA.norm(tf_idn_doc) # According to ZJ's tutorial notes, makes more sense
 
         if normalise_tf_idf_q != 0:
             tf_idf_q /= normalise_tf_idf_q
         if normalise_tf_idn_doc != 0:
             tf_idn_doc /= normalise_tf_idn_doc
-        tf_idn_doc *= len(search.get_words_in_doc(doc)) # TODO: Verify the correctness of this
-        # TODO: Do we have to normalise this?
+        # tf_idn_doc *= len(search.get_words_in_doc(doc))
         
         tf_idn_doc = tf_idn_doc.reshape(len(tf_idn_doc), 1)
         score = np.dot(tf_idf_q, tf_idn_doc)[0]
