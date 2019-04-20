@@ -27,8 +27,8 @@ def preprocess_title(titles):
     titles = [t for t in titles if len(t) > 1]
     titles = [t for t in titles if not is_num(t)]
     titles = [t.lower() for t in titles]
-    titles = [str(clean(w)) for w in titles]
     titles = split(titles)
+    titles = [str(clean(w)) for w in titles]
     titles = [STEMMER.stem(t) for t in titles]
     return titles[:-1]    
 
@@ -37,8 +37,8 @@ def preprocess(data):
     Clean data for content before tokenizing
     '''
     data = [w for w in data if not is_num(w) and w not in string.punctuation]
-    data = [str(clean(w)) for w in data]
     data = split(data)
+    data = [str(clean(w)) for w in data]
     data = [w for w in data if not has_weird_chars(w)]
     data = [w for w in data if len(w) > 1]
     result_data = [str(STEMMER.stem(w)) for w in data]
@@ -46,14 +46,11 @@ def preprocess(data):
 
 def split(data):
     '''
-    Splits words that are conjoined by slashes
+    Splits words that are conjoined by punctuation
     '''
     result = []
     for word in data:
-        if '/' in word:
-            result.extend(word.split('/'))
-        else:
-            result.append(word)
+        result.extend(re.split('\\W+', word))
     return result
 
 def is_num(number):
@@ -68,12 +65,8 @@ def clean(original_word):
     Remove digits, punctuation, unicode chars in words
     '''
     word = re.sub("\\d", "", original_word)
-    word = strip_punctuation(word)
     word = word.encode('utf-8', 'ignore')
     return word.lower()
-
-def strip_punctuation(s):
-    return ''.join(c for c in s if c not in string.punctuation)
 
 def has_weird_chars(word):
     '''

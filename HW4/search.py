@@ -61,12 +61,14 @@ def calculate_scores(doc_tf, tf_idf_query):
         normalise_tf_idf_q = LA.norm(tf_idf_q)
         normalise_tf_idn_doc = search.get_document_length(doc)
 
+
         if normalise_tf_idf_q != 0:
             tf_idf_q /= normalise_tf_idf_q
-        if normalise_tf_idn_doc != 0:
-            tf_idn_doc /= normalise_tf_idn_doc
+        # if normalise_tf_idn_doc != 0:
+            # tf_idn_doc /= normalise_tf_idn_doc
+        tf_idn_doc *= len(search.get_words_in_doc(doc)) # TODO: Verify the correctness of this
+        # TODO: Do we have to normalise this?
         
-        # TODO: Need to verify this, do we need to multiply by total number of words in that doc?
         tf_idn_doc = tf_idn_doc.reshape(len(tf_idn_doc), 1)
         score = np.dot(tf_idf_q, tf_idn_doc)[0]
         scores[doc] = score
@@ -224,6 +226,7 @@ if __name__ == "__main__":
         if doc in query_result:
             query_result.remove(doc)
         query_result.append(doc)
+    print len(query_result)
     for doc in query_result:
         output.write(str(doc) + " ")
     """
