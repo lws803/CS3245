@@ -145,7 +145,6 @@ def read_dict(dictionary, postings_file):
                 print E
                 print line
                 print mode
-                exit()
     return postings_file_ptrs
 
 
@@ -308,6 +307,8 @@ class SearchBackend:
         """
         words = word_tokenize(query)
         words = preprocess(words)
+        if len(words) == 0:
+            return []
         res = self.postings.get_postings_list(words.pop())
         while len(words) > 0:
             res = union(res, self.postings.get_postings_list(words.pop()))

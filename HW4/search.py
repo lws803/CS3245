@@ -9,7 +9,6 @@ import math
 import string
 import struct
 from queryReader import Query
-from nltk.stem.porter import PorterStemmer
 from postingsReader import *
 from math import log
 from numpy import linalg as LA
@@ -21,13 +20,10 @@ K_PSEUDO_RELEVANT = 5
 ROCCHIO_SCORE_THRESH = 0.5
 PSEUDO_RELEVANCE_FEEDBACK = True
 
-stemmer = PorterStemmer()
-
 postings_file_ptr = None
 search = None
-query = None
 
-def get_tf_idf_query():
+def get_tf_idf_query(query):
     # LNC.LTC scheme
     tf_idf_query = {}
 
@@ -40,7 +36,7 @@ def get_tf_idf_query():
     
     return tf_idf_query
 
-def get_doc_tf(doc_list):
+def get_doc_tf(doc_list, query):
     doc_tf = {}
     for word in query.tf_q:
         tf_doc = search.get_tf(word, doc_list)
@@ -76,8 +72,8 @@ def calculate_scores(doc_tf, tf_idf_query):
     
     return scores
 
-def calculate_ranked_scores(doc_list, tf_idf_query):
-    doc_tf = get_doc_tf(doc_list)
+def calculate_ranked_scores(doc_list, tf_idf_query, query):
+    doc_tf = get_doc_tf(doc_list, query)
 
     # Calculate tf_idn of docs
     scores = calculate_scores(doc_tf, tf_idf_query)
@@ -91,19 +87,89 @@ def calculate_ranked_scores(doc_list, tf_idf_query):
     return sorted_list
 
 def ranked_retrieval(query, query_line):
-    tf_idf_query = get_tf_idf_query()
+    tf_idf_query = get_tf_idf_query(query)
     
     doc_list = []
     for doc in deduplicate_results(search.free_text_query(query_line)):
         doc_list.append(doc[0])
 
-    sorted_list = calculate_ranked_scores(doc_list, tf_idf_query)
+    sorted_list = calculate_ranked_scores(doc_list, tf_idf_query, query)
     return sorted_list
 
 # TODO: Fix issue with retrieving tf_idf_query values
-def ranked_retrieval_boolean(doc_list):
-    sorted_list = calculate_ranked_scores(doc_list, get_tf_idf_query())
+def ranked_retrieval_boolean(doc_list, query):
+    sorted_list = calculate_ranked_scores(doc_list, get_tf_idf_query(query), query)
     return sorted_list
+
+def handle_query(query_line):
+    """
+    Returns an unranked query after passing through boolean retrieval
+    :param query:
+    :return:
+    """
+    print query_line
+    query = Query(query_line)
+
+    # For testing purposes: write all queries to the output file
+    output.write(str(query_line))
+
+    relevant_docs = []
+
+    if query.is_boolean:
+        for subquery in query.processed_queries:
+            if len(subquery) > 1:
+                if len(relevant_docs) == 0:
+                    relevant_docs = search.phrase_query(subquery)
+                relevant_docs = two_way_merge(relevant_docs, search.phrase_query(subquery))
+            else:
+                if len(relevant_docs) == 0:
+                    relevant_docs = deduplicate_results(search.free_text_query(subquery[0]))
+                relevant_docs = two_way_merge(relevant_docs, deduplicate_results(search.free_text_query(subquery[0])))
+        flattened_docs = set([])
+        for doc in relevant_docs:
+            flattened_docs.add(doc[0])
+        
+        relevant_docs = []
+        for doc in ranked_retrieval_boolean(list(flattened_docs), query):
+            print doc[1], -doc[0]
+            relevant_docs.append(doc[1])
+    else:
+        ranked_list = ranked_retrieval(query, query_line)
+        for doc in ranked_list:
+            print doc[1], -doc[0]
+            relevant_docs.append(doc[1])
+
+        """
+        # Beginning of rocchio expansion
+        index = 0
+        universal_vocab = set(query.tf_q.keys())
+        score_table_docs = {}
+
+        if PSEUDO_RELEVANCE_FEEDBACK:
+            while index < len(ranked_list) and index < K_PSEUDO_RELEVANT:
+                curr_doc = ranked_list[index][1]
+                relevant_docs.append(curr_doc)
+                doc_words = set(Counter(search.get_words_in_doc(curr_doc)).keys())
+                universal_vocab |= doc_words
+                index += 1
+
+        # Second round to get the score table
+        for curr_doc in relevant_docs:
+            doc_words = Counter(search.get_words_in_doc(curr_doc))
+            score_table_docs[curr_doc] = generate_table(doc_words, universal_vocab)
+
+
+        # Obtain table and calculate the scores
+        rocchio_table = get_rocchio_table(get_tf_idf_query(),
+            get_centroid(relevant_docs, score_table_docs),
+            universal_vocab)
+
+        for term in sorted(rocchio_table.items(), key = lambda kv:(kv[1], kv[0]), reverse=True):
+            print (term)
+            if (term[1] < ROCCHIO_SCORE_THRESH): break
+        """
+
+    return relevant_docs
 
 def usage():
     print ("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
@@ -128,20 +194,39 @@ for o, a in opts:
     else:
         assert False, "unhandled option"
 
+
 if dictionary_file == None or postings_file == None or file_of_queries == None or file_of_output == None :
     usage()
     sys.exit(2)
 
 if __name__ == "__main__":
     output = open(file_of_output, 'w')
-    queries = open(file_of_queries, 'r')
 
     postings_file_ptr = read_dict(dictionary_file, postings_file)
     search = SearchBackend(postings_file_ptr)
 
     query_string = None
     relevant_docs = []
-    for line in queries.readlines():
+    query_result = []
+
+    with open(file_of_queries, 'r') as queries:
+        line_count = 0
+        for line in queries:
+            if line_count == 0:
+                query_result = handle_query(line)
+                line_count = 1
+            else:
+                relevant_docs.append(int(line))
+
+    # Reorder and add the relevant docs at the top
+    for doc in relevant_docs:
+        if doc in query_result:
+            query_result.remove(doc)
+        query_result.append(doc)
+    for doc in query_result:
+        output.write(str(doc) + " ")
+    """
+    for line in queries:
         if query is not None:
             # relevant_docs.append(int(line)) # TODO: Uncomment this only when you have the full postings list
             pass
@@ -169,6 +254,8 @@ if __name__ == "__main__":
         # TODO: Need to verift this, it outputs a score of zero for a case where it shouldnt be
 
         # After performing AND operations on the query, rank the relevant_docs list generated
+
+    #(Arjo's comment) There should be no diff between boolean and
     else: # Free text retrieval
         ranked_list = ranked_retrieval(query, query_string)
         for doc in ranked_list:
@@ -205,5 +292,6 @@ if __name__ == "__main__":
         # TODO: Reindex and lift the limit
         # TODO: Output baseline ranked retrieval results without the rocchio expansion to file and upload to CS3245 site
 
-    queries.close()
+    
+    """
     output.close()
