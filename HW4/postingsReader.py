@@ -87,7 +87,7 @@ class PostingsFilePointers:
                             self.doc_freqs[word], self.postings_file)
 
     def add_metadata(self, doc_id, length, court):
-        self.metadata[doc_id] = {"length": length, "cout": court}
+        self.metadata[int(doc_id)] = {"length": float(length), "court": court}
 
     def get_meta_data(self, doc_id):
         """
@@ -313,6 +313,9 @@ class SearchBackend:
         while len(words) > 0:
             res = union(res, self.postings.get_postings_list(words.pop()))
         return res
+
+    def get_document_length(self, doc_id):
+        return self.postings.get_meta_data(doc_id)["length"]
 
     def get_tf(self, term, documents):
         """

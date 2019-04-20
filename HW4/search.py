@@ -12,6 +12,7 @@ from queryReader import Query
 from postingsReader import *
 from math import log
 from numpy import linalg as LA
+from nltk.corpus import wordnet as wn
 from collections import Counter
 from rocchioExpansion import generate_table, get_centroid, get_rocchio_table
 
@@ -58,7 +59,7 @@ def calculate_scores(doc_tf, tf_idf_query):
         tf_idf_q = np.array(tf_idf_query.values())
         
         normalise_tf_idf_q = LA.norm(tf_idf_q)
-        normalise_tf_idn_doc = LA.norm(tf_idn_doc)
+        normalise_tf_idn_doc = search.get_document_length(doc)
 
         if normalise_tf_idf_q != 0:
             tf_idf_q /= normalise_tf_idf_q
