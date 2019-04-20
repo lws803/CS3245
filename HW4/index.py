@@ -163,9 +163,11 @@ def indexing(dataset_file, output_dictionary, output_postings):
         # Postings: [doc_id: [positional index, title/content]]
         term_doc_pindex = sorted(postings.items(), key=lambda x:(x[0], x[1][0]))
         df = len(term_doc_pindex)
+        doc_post_length = 0
         extraBytes = 0
         for doc_id, pIndexes in term_doc_pindex:
             tf = len(pIndexes)
+            doc_post_length += tf
             weight = 1 + log(tf, 10)
             if doc_id not in vector_space_model:
                 vector_space_model[doc_id] = 0
@@ -176,7 +178,7 @@ def indexing(dataset_file, output_dictionary, output_postings):
                 extraBytes += (byte_size * 3)
 
         if len(term) > 0:
-            dict_out.write(term + " " + str(df) + " " + str(byte_offset) + "\n")
+            dict_out.write(term + " " + str(df) + str(doc_post_length) + " " + str(byte_offset) + "\n")
         byte_offset += extraBytes
 
 
