@@ -19,7 +19,7 @@ class TestTwoWayMerge(unittest.TestCase):
         # Now test with offsets
         self.assertEqual(two_way_merge(array1, array2, use_offset=True, offset=10), [])
         self.assertEqual(two_way_merge(array1, array2, use_offset=True, offset=-1), [(1, 2)])
-        self.assertEqual(two_way_merge(array2, array1, use_offset=True, offset=1), [(1, 2)])
+        self.assertEqual(two_way_merge(array2, array1, use_offset=True, offset=1), [(1, 3)])
 
         # Perform Bounds Value Analysis (BVA)
         # Check empty arrays
@@ -50,18 +50,18 @@ class PhraseQueryTest(unittest.TestCase):
     def test_phrase_query(self):
         postings = MockPostingsFilePointers()
         backend = SearchBackend(postings)
-        result = backend.phrase_query("Bob is hungry")
+        result = backend.phrase_query(preprocess(word_tokenize("Bob is hungry")))
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0][0], 6)
-        result = backend.phrase_query("hungry is Bob")
+        result = backend.phrase_query(preprocess(word_tokenize("hungry is Bob")))
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0][0], 1)
-        result = backend.phrase_query("hungry is Bob")
+        result = backend.phrase_query(preprocess(word_tokenize("hungry is Bob")))
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0][0], 1)
-        result = backend.phrase_query("bob has no clue")
+        result = backend.phrase_query(preprocess(word_tokenize("bob has no clue")))
         self.assertEqual(len(result), 0)
-        result = backend.phrase_query("hungry")
+        result = backend.phrase_query(preprocess(word_tokenize("hungry")))
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0][0], 1)
         self.assertEqual(result[1][0], 6)
