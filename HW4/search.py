@@ -32,7 +32,22 @@ STEMMER = PorterStemmer()
 
 postings_file_ptr = None
 search = None
-_stopwords = stopwords.words('english') + ["court", "case", "would", "also"]
+_stopwords = stopwords.words('english') + [
+            "court",
+            "case",
+            "would",
+            "also", 
+            "one", 
+            "two", 
+            "three", 
+            "four",
+            "five",
+            "six",
+            "seven",
+            "eight",
+            "nine",
+            "ten"]
+
 _spaces = ["\n", "", " "]
 
 # -- Synset  --
@@ -764,7 +779,7 @@ def rocchio_expansion (query, relevant_docs, legit_relevant_docs):
     if relevant_docs is not None:
         print "Performing pseudo relevance feedback..."
         for doc in relevant_docs:
-            if (index > K_PSEUDO_RELEVANT):
+            if (index >= K_PSEUDO_RELEVANT):
                 break
             pseudo_relevant_docs.append(doc)
             doc_words = search.get_words_in_doc(doc)            
@@ -779,14 +794,14 @@ def rocchio_expansion (query, relevant_docs, legit_relevant_docs):
         if term not in _stopwords and \
             term not in _spaces and \
             term not in query.tf_q:
-            
+
             prominent_list.append((-1*counted_terms[term], term))
     
     prominent_list.sort()
     # Pick out K top most prominent terms
     index = 0
     for item in prominent_list:
-        if index > K_PROMINENT_WORDS:
+        if index >= K_PROMINENT_WORDS:
             break
         universal_vocab.add(item[1])
         index += 1
@@ -816,7 +831,7 @@ def rocchio_expansion (query, relevant_docs, legit_relevant_docs):
 
     for doc in ranked_list:
         if doc[1] not in legit_relevant_docs:
-            print doc[1], -doc[0]
+            # print doc[1], -doc[0]
             relevant_docs.append(doc[1])
 
     return relevant_docs
