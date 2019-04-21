@@ -19,7 +19,8 @@ from numpy import linalg as LA
 
 from collections import Counter
 
-# Parameters 
+# Parameters
+THESAURUS_ENABLED = True
 K_PSEUDO_RELEVANT = 10
 ROCCHIO_SCORE_THRESH = 0.7
 PSEUDO_RELEVANCE_FEEDBACK = False
@@ -833,12 +834,12 @@ def handle_query(query_line, legit_relevant_docs):
                 # print doc[1], -doc[0]
                 relevant_docs.append(doc[1])
 
+        if THESAURUS_ENABLED:
+            relevant_docs = list(map(lambda x: x[1], synset_expansion(query, search)))
         if PSEUDO_RELEVANCE_FEEDBACK:
             relevant_docs = rocchio_expansion(query, relevant_docs, legit_relevant_docs)
 
-        docs = synset_expansion(query, search)
-        for scor, doc in docs[0:10]:
-            print doc, scor
+
 
 
     return relevant_docs
