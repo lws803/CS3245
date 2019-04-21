@@ -2,7 +2,7 @@ This is the README file for A0167342E-A0177603A-A0164515H-A0164682X's submission
 Email address for A0167342E: e0175775@u.nus.edu
 Email address for A0177603A: e0260109@u.nus.edu
 Email address for A0164515H: e0148557@u.nus.edu
-Email address for A0164682X: 
+Email address for A0164682X: e0148724@u.nus.edu
 
 == Python Version ==
 
