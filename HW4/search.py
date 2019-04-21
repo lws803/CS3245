@@ -22,7 +22,7 @@ from collections import Counter
 # Parameters 
 K_PSEUDO_RELEVANT = 10
 ROCCHIO_SCORE_THRESH = 0.7
-PSEUDO_RELEVANCE_FEEDBACK = True
+PSEUDO_RELEVANCE_FEEDBACK = False
 ALPHA = 1
 BETA = 0.75
 STEMMER = PorterStemmer()
@@ -605,18 +605,19 @@ def calculate_scores(doc_tf, tf_idf_query):
         tf_idn_doc = tf_idn_doc.astype(float) # Turn the current 2D array to a float array 
         tf_idf_q = np.array(tf_idf_query.values())
         
-        normalise_tf_idf_q = LA.norm(tf_idf_q)
+        # normalise_tf_idf_q = LA.norm(tf_idf_q)
         # normalise_tf_idn_doc = search
         # Cosine normalization requires you to consider *EVERY TF* which is what document_length considers.
         # Read the notes properly
         normalise_tf_idn_doc = search.get_document_length(doc)
 
-        tf_idf_q /= normalise_tf_idf_q + 1e-9
-        tf_idn_doc /= normalise_tf_idn_doc +1e-9
-        # tf_idn_doc *= len(search.get_words_in_doc(doc))
+        # tf_idf_q /= normalise_tf_idf_q + 1e-9
+        # tf_idn_doc /= normalise_tf_idn_doc +1e-9
         
         tf_idn_doc = tf_idn_doc.reshape(len(tf_idn_doc), 1)
         score = np.dot(tf_idf_q, tf_idn_doc)[0]
+        score /= normalise_tf_idn_doc # Simplified step for obtain scoring
+
         scores[doc] = score
     
     return scores
