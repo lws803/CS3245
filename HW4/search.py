@@ -22,7 +22,8 @@ from collections import Counter
 # Parameters
 THESAURUS_ENABLED = True
 K_PSEUDO_RELEVANT = 10
-ROCCHIO_SCORE_THRESH = 0.7
+K_PROMINENT_WORDS = 10
+ROCCHIO_SCORE_THRESH = 0.5
 PSEUDO_RELEVANCE_FEEDBACK = False
 ROCCHIO_EXPANSION = True
 ALPHA = 1
@@ -31,6 +32,24 @@ STEMMER = PorterStemmer()
 
 postings_file_ptr = None
 search = None
+_stopwords = stopwords.words('english') + [
+            "court",
+            "case",
+            "would",
+            "also", 
+            "one", 
+            "two", 
+            "three", 
+            "four",
+            "five",
+            "six",
+            "seven",
+            "eight",
+            "nine",
+            "ten"]
+
+_spaces = ["\n", "", " "]
+
 # -- Synset  --
 
 def get_adjusted_tf(docs, synset, expanded_query, backend):
@@ -289,13 +308,10 @@ class Query:
         """
         Allows addition of new terms from relevance feedback
         """
-        for term in new_terms:
-            if term not in self.tf_q and term != "\n" \
-                and term not in preprocess(stopwords.words('english')):
-                
-                self.tf_q[term] = 1 # Add them as one
-                print "accepted:", term
-                self.query_line += " " + term
+        for term in new_terms:                
+            self.tf_q[term] = 1 # Add them as one
+            print "accepted:", term
+            self.query_line += " " + term
 
 
 # -- Postings --
@@ -660,6 +676,9 @@ class SearchBackend:
         return self.postings.get_words_in_doc(doc_id)
 
 # -- Search --
+_stopwords = preprocess(_stopwords)
+
+
 def get_tf_idf_query(query):
     # LNC.LTC scheme
     tf_idf_query = {}
@@ -743,7 +762,7 @@ def ranked_retrieval_boolean(doc_list, query):
 
 def rocchio_expansion (query, relevant_docs, legit_relevant_docs):
     # Beginning of rocchio expansion
-    universal_vocab = set([])
+    universal_vocab = []
     score_table_docs = {}
 
     print "Performing ROCCHIO expansion..."
@@ -753,30 +772,40 @@ def rocchio_expansion (query, relevant_docs, legit_relevant_docs):
         print "Performing relevance feedback..."
         for doc in legit_relevant_docs:
             pseudo_relevant_docs.append(doc)
-            doc_words = set(Counter(search.get_words_in_doc(doc)).keys())
-            
-            # Take only recurring terms among a few documents
-            if len(universal_vocab) == 0:
-                universal_vocab = doc_words
-            universal_vocab &= doc_words
+            doc_words = search.get_words_in_doc(doc)            
+            universal_vocab += doc_words
 
     index = 0
     if relevant_docs is not None:
         print "Performing pseudo relevance feedback..."
         for doc in relevant_docs:
-            if (index > K_PSEUDO_RELEVANT):
+            if (index >= K_PSEUDO_RELEVANT):
                 break
             pseudo_relevant_docs.append(doc)
-            doc_words = set(Counter(search.get_words_in_doc(doc)).keys())
-            
-            # Take only recurring terms among a few documents
-            if len(universal_vocab) == 0:
-                universal_vocab = doc_words
-            universal_vocab &= doc_words
+            doc_words = search.get_words_in_doc(doc)            
+            universal_vocab += doc_words
             index += 1
 
-    universal_vocab |= set(query.tf_q.keys())
+    universal_vocab += query.tf_q.keys()
+    counted_terms = Counter(universal_vocab)
+    prominent_list = []
+    universal_vocab = set([])
+    for term in counted_terms:
+        if term not in _stopwords and \
+            term not in _spaces and \
+            term not in query.tf_q:
+
+            prominent_list.append((-1*counted_terms[term], term))
     
+    prominent_list.sort()
+    # Pick out K top most prominent terms
+    index = 0
+    for item in prominent_list:
+        if index >= K_PROMINENT_WORDS:
+            break
+        universal_vocab.add(item[1])
+        index += 1
+
     # Second round to get the score table
     for curr_doc in pseudo_relevant_docs:
         doc_words = Counter(search.get_words_in_doc(curr_doc))
@@ -793,17 +822,14 @@ def rocchio_expansion (query, relevant_docs, legit_relevant_docs):
             accepted_terms.append(term)
 
     query.add_suggestions(accepted_terms)
-    print query.tf_q
     print query.query_line
 
-    # TODO: Fix extremely slow process, find out what is wrong, maybe only take recurrent terms among a few documents
-    # TODO: Problem might be from a slow ranked retrieval format. Find out how to fix it
     relevant_docs = legit_relevant_docs
     ranked_list = ranked_retrieval(query, query.query_line)
 
     for doc in ranked_list:
         if doc[1] not in legit_relevant_docs:
-            print doc[1], -doc[0]
+            # print doc[1], -doc[0]
             relevant_docs.append(doc[1])
 
     return relevant_docs
@@ -911,6 +937,5 @@ if __name__ == "__main__":
 
     query_result = handle_query(query_string, relevant_docs)    
     for doc in query_result:
-        print doc
         output.write(str(doc) + " ")
     output.close()
