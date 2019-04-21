@@ -626,7 +626,7 @@ class SearchBackend:
         counts = {}
         for doc in documents:
             counts[doc] = 0
-        
+            
         end_postings = False
         doc_index = 0
 
