@@ -52,6 +52,7 @@ title or in the document body.
 
 Searching:
 
+Two modes are supported boolean and free text.
 
 
 Query Refinement:
@@ -61,8 +62,19 @@ We used Wordnet to find synonyms to words in the query. The hits were then retri
 for ranking. When ranking, synonyms were bunched together in the vector bins. I.e. Telephone and phone would be
 merged together into one dimension.
 
-2) Pseudo Ranked Retrieval using rocchio 
+2) Ranked Retrieval using rocchio
 
+The above can be configured using the following lines
+```
+    THESAURUS_ENABLED = True # Enable synonym based query expansion
+    K_PSEUDO_RELEVANT = 10
+    K_PROMINENT_WORDS = 10
+    ROCCHIO_SCORE_THRESH = 0.5
+    PSEUDO_RELEVANCE_FEEDBACK = False
+    ROCCHIO_EXPANSION = True # Enable rocchio expansion
+    ALPHA = 1
+    BETA = 0.75
+```
 
 == Files included with this submission ==
 1. dictionary_final.txt - the dictionary part of our index
