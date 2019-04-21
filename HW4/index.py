@@ -144,7 +144,7 @@ def indexing(dataset_file, output_dictionary, output_postings):
 
         for i in range(len(tokenized_words)):
             term = tokenized_words[i]
-            if len(title) == 0:
+            if len(term) == 0:
                 continue
             if term not in dictionary:
                 dictionary[term] = {}
