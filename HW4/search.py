@@ -29,6 +29,93 @@ STEMMER = PorterStemmer()
 
 postings_file_ptr = None
 search = None
+# -- Synset  --
+
+def get_adjusted_tf(docs, synset, expanded_query, backend):
+    """
+    Calculates TF vector based on synonyms.
+    I.E collapses the doc vector dimensions
+    :param docs:
+    :param synset:
+    :param expanded_query:
+    :param backend:
+    :return:
+    """
+    inv_synset = {}
+    for word in synset:
+        for d in synset[word]:
+            inv_synset[d] = word
+    print inv_synset
+    terms = list(set(preprocess(expanded_query)))
+
+    doc_tfs = {}
+
+    for term in terms:
+        for doc, tf in backend.get_tf(term, docs):
+
+            if doc not in doc_tfs:
+                doc_tfs[doc] = {}
+
+            if inv_synset[term] not in doc_tfs[doc]:
+                doc_tfs[doc][inv_synset[term]] = tf
+            else:
+                doc_tfs[doc][inv_synset[term]] += tf
+
+    for doc in doc_tfs:
+       doc_tfs[doc] = log_vector(doc_tfs[doc])
+
+    return doc_tfs
+
+def log_vector(vec):
+
+    res = {}
+    for word in vec:
+        res[word] = 1 + log(vec[word])
+    return res
+
+def query_norm(query):
+    norm = 0
+    for word in query:
+        norm += query[word]**2
+    return norm**0.5
+
+def rank_documents(doc_vectors, query_vector, backend):
+    """
+    Rank documents and sort them by a query vector
+    :param doc_vectors:
+    :param query_vector:
+    :param backend
+    :return:
+    """
+    results = []
+    q_vec = log_vector(query_vector.tf_q)
+    for doc in doc_vectors:
+        # get dot product
+        dot_product = 0
+        for word in doc:
+            if word in q_vec:
+                dot_product += doc_vectors[doc][word]*q_vec[word]*backend.get_idf(word)
+        dot_product /= backend.get_document_length(doc)
+        dot_product /= query_norm(query_vector)
+        results.append((-dot_product, doc))
+    return sorted(results)
+
+def synset_expansion(query, backend):
+    """
+    Performs a synset expansion based TF-IDF ranked retrival
+    :param query: A Query object
+    :param backend: A SearchBackend object
+    :return:
+    """
+    new_query = query.query_line
+    for synset in query.synonyms:
+        for synonym in query.synonyms[synset]:
+            new_query += " " + synonym
+    print new_query
+    print preprocess(new_query.split())
+    res = backend.free_text_query(new_query)
+    doc_vectors = get_adjusted_tf(res, query.synonyms, new_query, backend)
+    return rank_documents(doc_vectors, query, backend)
 
 # -- Rocchio --
 def generate_table (table, universal_vocab):
@@ -51,7 +138,7 @@ def get_centroid(docs_list, score_table_docs):
                 total_sum[term] += score_table[term]
             else:
                 total_sum[term] = score_table[term]
-    
+
     centroid = {}
     for term in total_sum:
         centroid[term] = total_sum[term]/len(docs_list)
@@ -188,12 +275,15 @@ class Query:
             if token not in self.tf_q:
                 self.tf_q[token] = 1
                 # Process synonyms for terms in the query words
-                self.synonyms[token] = set([])
-                for syn in wordnet.synsets(token):
-                    for l in syn.lemmas():
-                        self.synonyms[token].add(l.name())
             else:
                 self.tf_q[token] += 1
+
+        for word in self.query_line.split():
+            for syn in wordnet.synsets(word):
+                for l in syn.lemmas():
+                    if word not in self.synonyms:
+                        self.synonyms[word] = set()
+                    self.synonyms[word].add(str(l.name()).replace("_", " "))
 
     def add_suggestions (self, new_terms):
         """
@@ -735,6 +825,7 @@ def handle_query(query_line, legit_relevant_docs):
                 # print doc[1], -doc[0]
                 relevant_docs.append(doc[1])
     else:
+
         ranked_list = ranked_retrieval(query, query.query_line)
         relevant_docs = legit_relevant_docs
         
@@ -745,6 +836,10 @@ def handle_query(query_line, legit_relevant_docs):
 
         if PSEUDO_RELEVANCE_FEEDBACK:
             relevant_docs = rocchio_expansion(query, relevant_docs, legit_relevant_docs)
+
+        docs = synset_expansion(query, search)
+        for scor, doc in docs:
+            print doc
 
     return relevant_docs
 
