@@ -608,6 +608,8 @@ def calculate_scores(doc_tf, tf_idf_query):
         
         normalise_tf_idf_q = LA.norm(tf_idf_q)
         # normalise_tf_idn_doc = search
+        # Cosine normalization requires you to consider *EVERY TF* which is what document_length considers.
+        # Read the notes properly
         normalise_tf_idn_doc = search.get_document_length(doc)
 
         tf_idf_q /= normalise_tf_idf_q + 1e-9
