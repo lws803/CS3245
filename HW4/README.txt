@@ -73,7 +73,8 @@ The general pattern of the rocchio algorithm is highlighted below:
 2. Set threshold for rocchio score to ignore terms with low score (< 0.7)
 3. Combine the relevant and pseudo relevant docs together to provide a smaller range of common terms among the docs
 4. But this method is not representative as even if the term is prominent in a few documents but not in some of them, it will be left out
-5. We have also decided to create our own stopword list as the documents consistently contain words such as court, case etc etc
+5. Hence, we then decided to use the top 10 prominent terms for rocchio instead
+6. We have also decided to create our own stopword list as the documents consistently contain words such as court, case etc etc
 
 === Configuring all features for user use ===
 The above can be configured using the following lines
