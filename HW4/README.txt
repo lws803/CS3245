@@ -1,7 +1,7 @@
 This is the README file for A0167342E-A0177603A-A0164515H-A0164682X's submission 
 Email address for A0167342E: e0175775@u.nus.edu
 Email address for A0177603A: e0260109@u.nus.edu
-Email address for A0164515H: 
+Email address for A0164515H: e0148557@u.nus.edu
 Email address for A0164682X: 
 
 == Python Version ==
@@ -21,6 +21,35 @@ and finally stemming.
 6. For each doc ID, sort the postings by docId and positional index. Then convert these postings into byte and write out. Update the current position of byte offset and the document frequency for each term and write them into documents.txt.
 7. Weights for each document is summed up. Together with each doc_id's court information, they are written into the documents.txt.
 
+Format of dictionary:
+The dictionary contains 3 regions. The first region is the list of words, followed by document metadata. Lastly the
+third section contains a list of words in each document. This section is used by the Rocchio algorithm to perform
+query refinement. For the first region the format is:
+   <term> <document frequency> <postings length> <postings address>
+The term refers to the stemmed term. Postings length is the number of entries in the posting list for the term and postings offset is the byte offset of the starting of the postings.
+An example of this section would be:
+   telephon 254 1074 5688716
+The second region consists of the format:
+   <docid>:<document vector length>:<court>
+Here the document vector length is the square sum of all the term frequencies. This is useful for ranking later. An example would be
+   1231:4567:SG HIGH COURT
+The third region consists of a word list.
+   doc_id^word1^word2^...^wordn
+An example would be
+   1231^chicken^tastes^good
+
+
+Format of postings:
+
+Postings were stored in sorted arrays which took up contiguous space. Each posting entry has 12bytes which are structured like so:
+
+    +-------------+-------------+-------------+
+    |    doc_id   |  pos_index  |    zone     |
+    +-------------+-------------+-------------+
+    0             3             7             11
+The pos_index refers to the position of the term occurence in the document. The zone refers to where the term was found. Whether in the
+title or in the document body.
+
 Searching:
 
 
@@ -28,6 +57,8 @@ Searching:
 Query Refinement:
 
 1) Query Expansion using thesaurus
+
+
 
 2) Pseudo Ranked Retrieval using rocchio 
 
