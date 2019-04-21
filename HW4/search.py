@@ -730,11 +730,12 @@ def ranked_retrieval(query, query_line):
     doc_list = []
     for doc in deduplicate_results(search.free_text_query(query_line)):
         doc_list.append(doc[0])
-
+    doc_list.sort()
     sorted_list = calculate_ranked_scores(doc_list, tf_idf_query, query)
     return sorted_list
 
 def ranked_retrieval_boolean(doc_list, query):
+    doc_list.sort()
     sorted_list = calculate_ranked_scores(doc_list, get_tf_idf_query(query), query)
     return sorted_list
 
@@ -829,7 +830,7 @@ def handle_query(query_line, legit_relevant_docs):
         
         for doc in ranked_list:
             if doc[1] not in legit_relevant_docs:
-                print doc[1], -doc[0]
+                # print doc[1], -doc[0]
                 relevant_docs.append(doc[1])
 
         if PSEUDO_RELEVANCE_FEEDBACK:
@@ -891,7 +892,7 @@ if __name__ == "__main__":
 
     query_result = handle_query(query_string, relevant_docs)    
     for doc in query_result:
-        #print doc
+        print doc
         output.write(str(doc) + " ")
     """
     for line in queries:
