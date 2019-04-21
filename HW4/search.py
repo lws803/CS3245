@@ -44,30 +44,27 @@ def get_adjusted_tf(docs, synset, expanded_query, backend):
     inv_synset = {}
     for word in synset:
         for d in synset[word]:
-            inv_synset[d] = word
-    print inv_synset
-    terms = list(set(preprocess(expanded_query)))
-
+            for w in preprocess([d]):
+                inv_synset[w] = preprocess([word])[0]
+    terms = list(set(preprocess(expanded_query.split())))
+    print terms
     doc_tfs = {}
-
     for term in terms:
-        for doc, tf in backend.get_tf(term, docs):
-
+        for doc, tf in backend.get_tf(term, sorted(docs)).items():
             if doc not in doc_tfs:
                 doc_tfs[doc] = {}
-
-            if inv_synset[term] not in doc_tfs[doc]:
-                doc_tfs[doc][inv_synset[term]] = tf
-            else:
-                doc_tfs[doc][inv_synset[term]] += tf
+            if tf != 0:
+                if inv_synset[term] not in doc_tfs[doc]:
+                    doc_tfs[doc][inv_synset[term]] = tf
+                else:
+                    doc_tfs[doc][inv_synset[term]] += tf
 
     for doc in doc_tfs:
-       doc_tfs[doc] = log_vector(doc_tfs[doc])
+        doc_tfs[doc] = log_vector(doc_tfs[doc])
 
     return doc_tfs
 
 def log_vector(vec):
-
     res = {}
     for word in vec:
         res[word] = 1 + log(vec[word])
@@ -92,11 +89,12 @@ def rank_documents(doc_vectors, query_vector, backend):
     for doc in doc_vectors:
         # get dot product
         dot_product = 0
-        for word in doc:
+        print doc_vectors[doc], q_vec
+        for word in doc_vectors[doc]:
             if word in q_vec:
                 dot_product += doc_vectors[doc][word]*q_vec[word]*backend.get_idf(word)
         dot_product /= backend.get_document_length(doc)
-        dot_product /= query_norm(query_vector)
+        dot_product /= query_norm(q_vec)
         results.append((-dot_product, doc))
     return sorted(results)
 
@@ -111,9 +109,9 @@ def synset_expansion(query, backend):
     for synset in query.synonyms:
         for synonym in query.synonyms[synset]:
             new_query += " " + synonym
-    print new_query
-    print preprocess(new_query.split())
+
     res = backend.free_text_query(new_query)
+    res = list(set([x[0] for x in res]))
     doc_vectors = get_adjusted_tf(res, query.synonyms, new_query, backend)
     return rank_documents(doc_vectors, query, backend)
 
@@ -622,7 +620,6 @@ class SearchBackend:
         :return: dict containing the tf of document {<doc_id>: <tf>}
         """
         postings = iter(self.postings.get_postings_list(term))
-        #print list(postings)
         counts = {}
         for doc in documents:
             counts[doc] = 0
@@ -839,8 +836,9 @@ def handle_query(query_line, legit_relevant_docs):
             relevant_docs = rocchio_expansion(query, relevant_docs, legit_relevant_docs)
 
         docs = synset_expansion(query, search)
-        for scor, doc in docs:
-            print doc
+        for scor, doc in docs[0:10]:
+            print doc, scor
+
 
     return relevant_docs
 
