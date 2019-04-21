@@ -22,7 +22,7 @@ from collections import Counter
 # Parameters 
 K_PSEUDO_RELEVANT = 10
 ROCCHIO_SCORE_THRESH = 0.7
-PSEUDO_RELEVANCE_FEEDBACK = True
+PSEUDO_RELEVANCE_FEEDBACK = False
 ALPHA = 1
 BETA = 0.75
 STEMMER = PorterStemmer()
@@ -607,15 +607,11 @@ def calculate_scores(doc_tf, tf_idf_query):
         tf_idf_q = np.array(tf_idf_query.values())
         
         normalise_tf_idf_q = LA.norm(tf_idf_q)
-        # normalise_tf_idn_doc = search.get_document_length(doc)
-        normalise_tf_idn_doc = LA.norm(tf_idn_doc) # According to ZJ's tutorial notes, makes more sense
-        # TODO: Verify the difference here on ZJ's scoreboard. See which is better
-        # Watch out for daifuku on server
+        # normalise_tf_idn_doc = search
+        normalise_tf_idn_doc = search.get_document_length(doc)
 
-        if normalise_tf_idf_q != 0:
-            tf_idf_q /= normalise_tf_idf_q
-        if normalise_tf_idn_doc != 0:
-            tf_idn_doc /= normalise_tf_idn_doc
+        tf_idf_q /= normalise_tf_idf_q + 1e-9
+        tf_idn_doc /= normalise_tf_idn_doc +1e-9
         # tf_idn_doc *= len(search.get_words_in_doc(doc))
         
         tf_idn_doc = tf_idn_doc.reshape(len(tf_idn_doc), 1)
@@ -736,7 +732,7 @@ def handle_query(query_line, legit_relevant_docs):
         
         for doc in ranked_list:
             if doc[1] not in legit_relevant_docs:
-                # print doc[1], -doc[0]
+                print doc[1], -doc[0]
                 relevant_docs.append(doc[1])
 
         if PSEUDO_RELEVANCE_FEEDBACK:
@@ -793,7 +789,7 @@ if __name__ == "__main__":
 
     query_result = handle_query(query_string, relevant_docs)    
     for doc in query_result:
-        print doc
+        #print doc
         output.write(str(doc) + " ")
     """
     for line in queries:
