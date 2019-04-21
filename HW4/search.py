@@ -824,8 +824,6 @@ def rocchio_expansion (query, relevant_docs, legit_relevant_docs):
     query.add_suggestions(accepted_terms)
     print query.query_line
 
-    # TODO: Fix extremely slow process, find out what is wrong, maybe only take recurrent terms among a few documents
-    # TODO: Problem might be from a slow ranked retrieval format. Find out how to fix it
     relevant_docs = legit_relevant_docs
     ranked_list = ranked_retrieval(query, query.query_line)
 
