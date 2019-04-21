@@ -52,7 +52,7 @@ title or in the document body.
 
 Searching:
 
-Two modes are supported boolean and free text.
+Two modes are supported boolean and free text. We use the two pointer method to perform intersections and unions.
 
 
 Query Refinement:
