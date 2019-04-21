@@ -141,7 +141,7 @@ class Query:
         """
         identify the query type and process the queries
         """        
-        if ("AND" in query_string):
+        if ("AND" in query_string or (query_string[0] == '"' and query_string[-1] == '"')):
             # Consider as list of queries
             # Pre process if need be
             out = []
@@ -710,6 +710,7 @@ def handle_query(query_line, legit_relevant_docs):
     """
     print query_line
     query = Query(query_line)
+    print query.processed_queries
     relevant_docs = []
 
     if query.is_boolean:
