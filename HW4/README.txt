@@ -57,8 +57,9 @@ Searching:
 Query Refinement:
 
 1) Query Expansion using thesaurus
-
-
+We used Wordnet to find synonyms to words in the query. The hits were then retrieved from the postings list and returned
+for ranking. When ranking, synonyms were bunched together in the vector bins. I.e. Telephone and phone would be
+merged together into one dimension.
 
 2) Pseudo Ranked Retrieval using rocchio 
 
