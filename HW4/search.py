@@ -23,6 +23,7 @@ from collections import Counter
 K_PSEUDO_RELEVANT = 10
 ROCCHIO_SCORE_THRESH = 0.7
 PSEUDO_RELEVANCE_FEEDBACK = False
+ROCCHIO_EXPANSION = True
 ALPHA = 1
 BETA = 0.75
 STEMMER = PorterStemmer()
@@ -746,18 +747,33 @@ def rocchio_expansion (query, relevant_docs, legit_relevant_docs):
 
     print "Performing ROCCHIO expansion..."
     pseudo_relevant_docs = []
+
+    if legit_relevant_docs is not None:
+        print "Performing relevance feedback..."
+        for doc in legit_relevant_docs:
+            pseudo_relevant_docs.append(doc)
+            doc_words = set(Counter(search.get_words_in_doc(doc)).keys())
+            
+            # Take only recurring terms among a few documents
+            if len(universal_vocab) == 0:
+                universal_vocab = doc_words
+            universal_vocab &= doc_words
+
     index = 0
-    for doc in relevant_docs:
-        if (index > K_PSEUDO_RELEVANT):
-            break
-        pseudo_relevant_docs.append(doc)
-        doc_words = set(Counter(search.get_words_in_doc(doc)).keys())
-        
-        # Take only recurring terms among a few documents
-        if len(universal_vocab) == 0:
-            universal_vocab = doc_words
-        universal_vocab &= doc_words
-        index += 1
+    if relevant_docs is not None:
+        print "Performing pseudo relevance feedback..."
+        for doc in relevant_docs:
+            if (index > K_PSEUDO_RELEVANT):
+                break
+            pseudo_relevant_docs.append(doc)
+            doc_words = set(Counter(search.get_words_in_doc(doc)).keys())
+            
+            # Take only recurring terms among a few documents
+            if len(universal_vocab) == 0:
+                universal_vocab = doc_words
+            universal_vocab &= doc_words
+            index += 1
+
     universal_vocab |= set(query.tf_q.keys())
     
     # Second round to get the score table
@@ -833,8 +849,11 @@ def handle_query(query_line, legit_relevant_docs):
                 # print doc[1], -doc[0]
                 relevant_docs.append(doc[1])
 
-        if PSEUDO_RELEVANCE_FEEDBACK:
-            relevant_docs = rocchio_expansion(query, relevant_docs, legit_relevant_docs)
+        if ROCCHIO_EXPANSION:
+            if PSEUDO_RELEVANCE_FEEDBACK:
+                relevant_docs = rocchio_expansion(query, relevant_docs, None)
+            else:
+                relevant_docs = rocchio_expansion(query, None, legit_relevant_docs)
 
         docs = synset_expansion(query, search)
         for scor, doc in docs[0:10]:
