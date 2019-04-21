@@ -61,6 +61,8 @@ to ensure that the number of docs retrieved is sufficient to perform accurate ra
 To add to this, for each list of relevant docIDs, any documents that were provided to us in the query were appended to the
 front of the 'positive' list, to indicate that these documents are 100% relevant and hence need to be the highest up in the ranking list.
 
+For phrase queries we used position indexinf gor retrieving them.
+
 === Query Refinement: ===
 1) Query Expansion using thesaurus
 We used Wordnet to find synonyms to words in the query. The hits were then retrieved from the postings list and returned
