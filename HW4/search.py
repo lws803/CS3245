@@ -200,8 +200,7 @@ class Query:
         Allows addition of new terms from relevance feedback
         """
         for term in new_terms:
-            if new_terms[term] > ROCCHIO_SCORE_THRESH and \
-                term not in self.tf_q and term != "\n" \
+            if term not in self.tf_q and term != "\n" \
                 and term not in preprocess(stopwords.words('english')):
                 
                 self.tf_q[term] = 1 # Add them as one
@@ -674,7 +673,7 @@ def rocchio_expansion (query, relevant_docs, legit_relevant_docs):
     
     # Second round to get the score table
     for curr_doc in pseudo_relevant_docs:
-        doc_words = Counter(search.get_words_in_doc(curr_doc)) # TODO: Need to filter out \n as well
+        doc_words = Counter(search.get_words_in_doc(curr_doc))
         score_table_docs[curr_doc] = generate_table(doc_words, universal_vocab)
 
     # Obtain table and calculate the scores
@@ -682,7 +681,12 @@ def rocchio_expansion (query, relevant_docs, legit_relevant_docs):
         get_centroid(pseudo_relevant_docs, score_table_docs),
         universal_vocab)
 
-    query.add_suggestions(rocchio_table)
+    accepted_terms = []
+    for term in rocchio_table:
+        if rocchio_table[term] > ROCCHIO_SCORE_THRESH:
+            accepted_terms.append(term)
+
+    query.add_suggestions(accepted_terms)
     print query.tf_q
     print query.query_line
 
