@@ -61,7 +61,7 @@ to ensure that the number of docs retrieved is sufficient to perform accurate ra
 To add to this, for each list of relevant docIDs, any documents that were provided to us in the query were appended to the
 front of the 'positive' list, to indicate that these documents are 100% relevant and hence need to be the highest up in the ranking list.
 
-For phrase queries we used position indexinf gor retrieving them.
+For phrase queries we used position indexinf for retrieving them.
 
 === Query Refinement: ===
 1) Query Expansion using thesaurus
@@ -76,7 +76,7 @@ The general pattern of the rocchio algorithm is highlighted below:
 3. Combine the relevant and pseudo relevant docs together to provide a smaller range of common terms among the docs
 4. But this method is not representative as even if the term is prominent in a few documents but not in some of them, it will be left out
 5. Hence, we then decided to use the top 10 prominent terms for rocchio instead
-6. We have also decided to create our own stopword list as the documents consistently contain words such as court, case etc etc
+6. We have also decided to create our own stopword list as the documents consistently contain words such as court and case
 
 === Configuring all features for user use ===
 The above can be configured using the following lines
