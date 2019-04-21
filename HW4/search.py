@@ -22,7 +22,7 @@ from collections import Counter
 # Parameters 
 K_PSEUDO_RELEVANT = 10
 ROCCHIO_SCORE_THRESH = 0.7
-PSEUDO_RELEVANCE_FEEDBACK = False
+PSEUDO_RELEVANCE_FEEDBACK = True
 ALPHA = 1
 BETA = 0.75
 STEMMER = PorterStemmer()
@@ -207,6 +207,7 @@ class Query:
                 self.tf_q[term] = 1 # Add them as one
                 print "accepted:", term
                 self.query_line += " " + term
+
 
 # -- Postings --
 class PostingsList:
