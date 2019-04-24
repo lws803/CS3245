@@ -251,7 +251,8 @@ class Query:
     Holds information for a query (a single line of query)
     """
     def __init__ (self, query):
-        self.query_line = chomp(query.decode('utf8'))
+        query = query.decode('utf-8')
+        self.query_line = chomp(query)
         self.tf_q = {}
         self.processed_queries = None
         self.synonyms = {}
