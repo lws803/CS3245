@@ -63,22 +63,21 @@ def parse_query(query_string):
             STATE = "FREE-TEXT"
         elif STATE == "PHRASE-QUERY" and c == "\"":
             parsed_query.append({"text":str(buff), "type":"phrase_query"})
-            buff = ""
             STATE = "EXPECT_AND"
         elif STATE == "PHRASE-QUERY":
             buff +=c
         elif STATE == "FREE-TEXT":
             buff += c
             if buff[-5:] == " AND ":
-                parsed_query.append({"text": str(buff[:-5]), "type": "free-text"})
+                parsed_query.append({"text":str(buff[:-5]), "type": "free-text"})
                 buff = ""
                 STATE = "EXPECT-QUOTE"
         elif STATE == "EXPECT_AND":
             tmp += c
-            if tmp == " AND ":
-                STATE = "EXPECT-QUOTE"
-            if len(tmp) > 5:
-                raise Exception
+            if tmp[-5:] == " AND ":
+                parsed_query[-1]["text"] += tmp[:-5]
+		buff = ""
+		STATE = "EXPECT-QUOTE"
         else:
             raise Exception
     if STATE == "FREE-TEXT":
@@ -86,7 +85,13 @@ def parse_query(query_string):
     elif STATE != "EXPECT_AND":
         raise Exception
     else:
-        parsed_query.append({"text": buff, "type": "phrase_query"})
+	if tmp == "":
+            parsed_query.append({"text": buff, "type": "phrase_query"})
+        else:
+	    if len(parsed_query) > 0:
+                parsed_query[-1]["text"] += tmp
+                parsed_query[-1]["type"] = "free-text"
+
     return parsed_query
 
 # -- Synset  --
