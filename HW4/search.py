@@ -203,7 +203,7 @@ def preprocess(data):
     '''
     Clean data for content before tokenizing
     '''
-    data = [w for w in data if not is_num(w) and w not in string.punctuation]
+    data = [w for w in data if w not in string.punctuation]
     data = split(data)
     data = [str(clean(w)) for w in data]
     data = [w for w in data if not has_weird_chars(w)]
@@ -231,7 +231,8 @@ def clean(original_word):
     '''
     Remove digits, punctuation, unicode chars in words
     '''
-    word = re.sub("\\d", "", original_word)
+    # word = re.sub("\\d", "", original_word)
+    word = original_word
     word = word.encode('utf-8', 'ignore')
     return word.lower()
 
