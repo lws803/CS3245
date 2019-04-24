@@ -20,7 +20,7 @@ from numpy import linalg as LA
 from collections import Counter
 
 # Parameters
-THESAURUS_ENABLED = False
+THESAURUS_ENABLED = True
 K_PSEUDO_RELEVANT = 10
 K_PROMINENT_WORDS = 10
 ROCCHIO_SCORE_THRESH = 0.5
@@ -267,7 +267,7 @@ class Query:
                             break
                     preprocessed = preprocess(combined)
                     if len(preprocessed) > 0:
-                        out.append(preprocess(combined))
+                        out.append(preprocessed)
                 else:
                     if (split_word[i] != "AND"):
                         preprocessed = preprocess([split_word[i]])
@@ -301,13 +301,16 @@ class Query:
             else:
                 self.tf_q[token] += 1
 
-        if THESAURUS_ENABLED:        
-            for word in self.query_line.split():
-                for syn in wordnet.synsets(word):
-                    for l in syn.lemmas():
-                        if word not in self.synonyms:
-                            self.synonyms[word] = set()
-                        self.synonyms[word].add(str(l.name()).replace("_", " "))
+        try:
+            if THESAURUS_ENABLED:        
+                for word in self.query_line.split():
+                    for syn in wordnet.synsets(word):
+                        for l in syn.lemmas():
+                            if word not in self.synonyms:
+                                self.synonyms[word] = set()
+                            self.synonyms[word].add(str(l.name()).replace("_", " "))
+        except UnicodeDecodeError:
+            print "unicode decode error"
 
 
     def add_suggestions (self, new_terms):
