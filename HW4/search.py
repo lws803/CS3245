@@ -20,12 +20,12 @@ from numpy import linalg as LA
 from collections import Counter
 
 # Parameters
-THESAURUS_ENABLED = True
+THESAURUS_ENABLED = False
 K_PSEUDO_RELEVANT = 10
 K_PROMINENT_WORDS = 10
 ROCCHIO_SCORE_THRESH = 0.5
 PSEUDO_RELEVANCE_FEEDBACK = False
-ROCCHIO_EXPANSION = True
+ROCCHIO_EXPANSION = False
 ALPHA = 1
 BETA = 0.75
 STEMMER = PorterStemmer()
@@ -282,7 +282,9 @@ class Query:
                     out.append(preprocess(combined))
                 else:
                     if (split_word[i] != "AND"):
-                        out.append(preprocess([split_word[i]]))
+                        preprocessed = preprocess([split_word[i]])
+                        if len(preprocessed) > 0:
+                            out.append(preprocessed)
                     i += 1
 
             # Flattens the out list so we can get a tf_q
@@ -311,12 +313,14 @@ class Query:
             else:
                 self.tf_q[token] += 1
 
-        for word in self.query_line.split():
-            for syn in wordnet.synsets(word):
-                for l in syn.lemmas():
-                    if word not in self.synonyms:
-                        self.synonyms[word] = set()
-                    self.synonyms[word].add(str(l.name()).replace("_", " "))
+        if THESAURUS_ENABLED:        
+            for word in self.query_line.split():
+                for syn in wordnet.synsets(word):
+                    for l in syn.lemmas():
+                        if word not in self.synonyms:
+                            self.synonyms[word] = set()
+                        self.synonyms[word].add(str(l.name()).replace("_", " "))
+
 
     def add_suggestions (self, new_terms):
         """
