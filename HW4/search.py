@@ -66,7 +66,10 @@ def get_adjusted_tf(docs, synset, expanded_query, backend):
     for word in synset:
         for d in synset[word]:
             for w in preprocess([d]):
-                inv_synset[w] = preprocess([word])[0]
+                try:
+                    inv_synset[w] = preprocess([word])[0]
+                except IndexError:
+                    pass
     terms = list(set(preprocess(expanded_query.split())))
     print terms
     doc_tfs = {}
