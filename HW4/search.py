@@ -78,8 +78,9 @@ def parse_query(query_string):
                 parsed_query[-1]["text"] += tmp[:-5]
                 buff = ""
                 STATE = "EXPECT-QUOTE"
-            else:
-                raise Exception
+                tmp = ""
+        else:
+            raise Exception
 
     if STATE == "FREE-TEXT":
         parsed_query.append({"text":buff, "type": "free-text"})
@@ -316,6 +317,7 @@ class Query:
             self.processed_queries = parse_query(query_string)
         except:
             self.processed_queries = [{"text": query_string, "type":"free-text"}]
+            print "failed to parse correctly defaulting to free text"
 
         self.__get_tf(self.__get_term_list(query_string))
 
