@@ -277,7 +277,7 @@ class Query:
                 if (split_word[i][0] == '"'):
                     combined = []
                     d = i
-                    while (d < len(split_word)):
+                    while (d < len(split_word)-1):
                         combined.append(split_word[d].replace('"', ''))
                         d += 1
                         if split_word[d][-1] == '"':
