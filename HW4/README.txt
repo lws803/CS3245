@@ -38,7 +38,7 @@ An example would be
    1231^chicken^tastes^good
 
 === Format of postings: ===
-Postings were stored in sorted arrays which took up contiguous space. Each posting entry has 12bytes which are structured like so:
+Postings were stored in sorted arrays which took up contiguous space. Each posting entry has 12 bytes which is structured like so:
 
     +-------------+-------------+-------------+
     |    doc_id   |  pos_index  |    zone     |
@@ -48,35 +48,33 @@ The pos_index refers to the position of the term occurence in the document. The 
 title or in the document body.
 
 === Originality ===
-While the creating of the index, searching, and the algorithms implemented were quite similar to those taught in class, our team decided 
+While indexing, searching, and the algorithms implemented were quite similar to those taught in class, our team decided 
 to experiment by using a state machine to read the postings list in an efficient manner and switch between modes of retrieving data. This is
 akin to the format of the dictionary, which was explained earlier. 
 
 === Searching: ===
 There are two modes which are supported, namely boolean and free text. 
 For the relevant methods, we use the two pointer method to perform intersections and unions, and after experimenting
-with the query refinement methods, we decided to perform both query expansion as well as pseudo relevance feedback in order
-to ensure that the number of docs retrieved is sufficient to perform accurate ranking.
+with the query refinement methods, we decided to perform both query expansion as well as pseudo relevance feedback to ensure that the number of docs retrieved is sufficient to perform accurate ranking.
 
-To add to this, for each list of relevant docIDs, any documents that were provided to us in the query were appended to the
-front of the 'positive' list, to indicate that these documents are 100% relevant and hence need to be the highest up in the ranking list.
+In addition, for each list of relevant docIDs, any documents that were provided to us in the query were appended to the
+front of the 'positive' list, to indicate that these documents are 100% relevant and hence need to be the at the top of the ranking list.
 
-For phrase queries we used position indexinf for retrieving them.
+For phrase queries we used position indexing to retrieve them.
 
 === Query Refinement: ===
 1) Query Expansion using thesaurus
 We used Wordnet to find synonyms to words in the query. The hits were then retrieved from the postings list and returned
-for ranking. When ranking, synonyms were bunched together in the vector bins. I.e. 'Telephone' and 'phone' would be
+for ranking. When ranking, synonyms were bunched together in the vector bins, i.e. 'Telephone' and 'phone' would be
 merged together into one dimension.
 
-2) Ranked Retrieval using rocchio
-The general pattern of the rocchio algorithm is highlighted below:
-1. AND the terms discovered among doc terms in relevance/ pseudo relevance feedback
-2. Set threshold for rocchio score to ignore terms with low score (< 0.7)
-3. Combine the relevant and pseudo relevant docs together to provide a smaller range of common terms among the docs
-4. But this method is not representative as even if the term is prominent in a few documents but not in some of them, it will be left out
-5. Hence, we then decided to use the top 10 prominent terms for rocchio instead
-6. We have also decided to create our own stopword list as the documents consistently contain words such as court and case
+2) Query expansion using Rocchio (pseudo relevant feedback/ relevant feedback)
+The general pattern of the Rocchio algorithm as such:
+1. Obtain the relevant docs either by pseudo relevance (using top K docs sorted by ranked retrieval) or from the docIDs given in the query
+2. Extract words from these documents and sort them according to occurrence
+3. Filter out terms which are in stop words list
+4. Use the terms for Rocchio scoring
+5. Append/ suggest the terms back into query for terms which are above the set threshold. 
 
 === Configuring all features for user use ===
 The above can be configured using the following lines
