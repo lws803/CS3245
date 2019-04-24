@@ -883,7 +883,9 @@ def handle_query(query_line, legit_relevant_docs):
     :return:
     """
     # print query_line
-    query = Query(query_line.encode("ascii", "ignore"))
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+    query = Query(query_line)
     # print query.processed_queries
     relevant_docs = []
     is_boolean = len(query.processed_queries) > 1 or (len(query.processed_queries) > 0 and query.processed_queries[0]["type"] == "phrase_query")
