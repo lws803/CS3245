@@ -70,13 +70,15 @@ def parse_query(query_string):
         elif STATE == "FREE-TEXT":
             buff += c
             if buff[-5:] == " AND ":
-                parsed_query.append({"text":str(buff[:-5]), "type": "free-text"})
+                parsed_query.append({"text": str(buff[:-5]), "type": "free-text"})
                 buff = ""
                 STATE = "EXPECT-QUOTE"
         elif STATE == "EXPECT_AND":
             tmp += c
             if tmp == " AND ":
                 STATE = "EXPECT-QUOTE"
+            if len(tmp) > 5:
+                raise Exception
         else:
             raise Exception
     if STATE == "FREE-TEXT":
@@ -102,6 +104,7 @@ def get_adjusted_tf(docs, synset, expanded_query, backend):
     inv_synset = {}
     for word in synset:
         for d in synset[word]:
+            print preprocess([d]), d
             for w in preprocess([d]):
                 try:
                     inv_synset[w] = preprocess([word])[0]
@@ -121,8 +124,10 @@ def get_adjusted_tf(docs, synset, expanded_query, backend):
                         doc_tfs[doc][inv_synset[term]] = tf
                     else:
                         doc_tfs[doc][inv_synset[term]] += tf
-                except:
-                    print "Warning can't find term in invsynset "+term
+                except KeyError:
+                    pass
+                    #print "Warning can't find term in invsynset "+term
+                    #print inv_synset
 
     for doc in doc_tfs:
         doc_tfs[doc] = log_vector(doc_tfs[doc])
@@ -878,14 +883,16 @@ def handle_query(query_line, legit_relevant_docs):
     :return:
     """
     # print query_line
-    query = Query(query_line)
+    query = Query(query_line.encode("ascii", "ignore"))
     # print query.processed_queries
     relevant_docs = []
     is_boolean = len(query.processed_queries) > 1 or (len(query.processed_queries) > 0 and query.processed_queries[0]["type"] == "phrase_query")
+    print query.processed_queries
     print is_boolean
     if is_boolean:
         for q in query.processed_queries:
             words = preprocess(word_tokenize(q["text"]))
+            print words
             if len(words) > 0:
                 docs = search.phrase_query(words)
                 if len(relevant_docs) == 0:
@@ -893,7 +900,7 @@ def handle_query(query_line, legit_relevant_docs):
                 else:
                     relevant_docs = two_way_merge(docs, relevant_docs)
         relevant_docs = list(map(lambda x: x[0], relevant_docs))
-        relevant_docs = list(map(lambda x: x[1],ranked_retrieval_boolean(relevant_docs, query)))
+        relevant_docs = list(map(lambda x: x[1], ranked_retrieval_boolean(relevant_docs, query)))
     else:
         relevant_docs = list(map(lambda x: x[1], synset_expansion(query, search)))
         if ROCCHIO_EXPANSION:
