@@ -250,6 +250,7 @@ def preprocess(data):
     '''
     Clean data for content before tokenizing
     '''
+
     data = [w for w in data if w not in string.punctuation]
     data = split(data)
     data = [str(clean(w)) for w in data]
@@ -891,6 +892,7 @@ def handle_query(query_line, legit_relevant_docs):
     # print query_line
     reload(sys)
     sys.setdefaultencoding('utf-8')
+    query_line = re.sub('[^\x00-\x7F]+', " ", query_line)
     query = Query(query_line)
     # print query.processed_queries
     relevant_docs = []
