@@ -75,10 +75,14 @@ def get_adjusted_tf(docs, synset, expanded_query, backend):
             if doc not in doc_tfs:
                 doc_tfs[doc] = {}
             if tf != 0:
-                if inv_synset[term] not in doc_tfs[doc]:
-                    doc_tfs[doc][inv_synset[term]] = tf
-                else:
-                    doc_tfs[doc][inv_synset[term]] += tf
+                try:
+                    if inv_synset[term] not in doc_tfs[doc]:
+                        doc_tfs[doc][inv_synset[term]] = tf
+                    else:
+                        doc_tfs[doc][inv_synset[term]] += tf
+                except:
+                    print "Warning can't find term in invsynset"+term
+                    pass
 
     for doc in doc_tfs:
         doc_tfs[doc] = log_vector(doc_tfs[doc])
@@ -86,12 +90,22 @@ def get_adjusted_tf(docs, synset, expanded_query, backend):
     return doc_tfs
 
 def log_vector(vec):
+    """
+    Gets log value of a Vector
+    :param vec:
+    :return:
+    """
     res = {}
     for word in vec:
         res[word] = 1 + log(vec[word])
     return res
 
 def query_norm(query):
+    """
+    Normalizes a query vector
+    :param query:
+    :return:
+    """
     norm = 0
     for word in query:
         norm += query[word]**2
