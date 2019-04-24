@@ -313,13 +313,16 @@ class Query:
             else:
                 self.tf_q[token] += 1
 
-        if THESAURUS_ENABLED:        
-            for word in self.query_line.split():
-                for syn in wordnet.synsets(word):
-                    for l in syn.lemmas():
-                        if word not in self.synonyms:
-                            self.synonyms[word] = set()
-                        self.synonyms[word].add(str(l.name()).replace("_", " "))
+        try:
+            if THESAURUS_ENABLED:
+                for word in self.query_line.split():
+                    for syn in wordnet.synsets(word):
+                        for l in syn.lemmas():
+                            if word not in self.synonyms:
+                                self.synonyms[word] = set()
+                            self.synonyms[word].add(str(l.name()).replace("_", " "))
+        except UnicodeDecodeError:
+            print "no syn found for temr"
 
 
     def add_suggestions (self, new_terms):
