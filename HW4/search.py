@@ -279,7 +279,9 @@ class Query:
                             i = d + 1
                             combined.append(split_word[d].replace('"', ''))
                             break
-                    out.append(preprocess(combined))
+                    preprocessed = preprocess(combined)
+                    if len(preprocessed) > 0:
+                        out.append(preprocess(combined))
                 else:
                     if (split_word[i] != "AND"):
                         preprocessed = preprocess([split_word[i]])

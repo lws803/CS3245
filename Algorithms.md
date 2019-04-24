@@ -49,13 +49,13 @@
 8. Adding additional info to contribute to document ranking
 
 ### IR Evaluation
-#### Unranked eval
+#### Unranked eval, for unordered set of documents
 1. F measures
 #### Ranked eval
 1. Precision at top K (widely used)
 2. 11-point interpolated average precision
 3. MAP
-4. R-precision
+4. R-precision (describes only one point on the precision-recall curve, similar to 'Precision at k'
 #### Creating test collections
 1. Kappa measure - measure of agreement between judges
 
