@@ -76,19 +76,18 @@ def parse_query(query_string):
             tmp += c
             if tmp[-5:] == " AND ":
                 parsed_query[-1]["text"] += tmp[:-5]
-		buff = ""
-		STATE = "EXPECT-QUOTE"
-        else:
-            raise Exception
+                buff = ""
+                STATE = "EXPECT-QUOTE"
+            else:
+                raise Exception
+
     if STATE == "FREE-TEXT":
         parsed_query.append({"text":buff, "type": "free-text"})
     elif STATE != "EXPECT_AND":
         raise Exception
     else:
-	if tmp == "":
-            parsed_query.append({"text": buff, "type": "phrase_query"})
-        else:
-	    if len(parsed_query) > 0:
+        if tmp != "":
+            if len(parsed_query) > 0:
                 parsed_query[-1]["text"] += tmp
                 parsed_query[-1]["type"] = "free-text"
 
