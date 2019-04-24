@@ -307,7 +307,9 @@ class Query:
             self.processed_queries = parse_query(query_string)
         except:
             self.processed_queries = [{"text": query_string, "type":"free-text"}]
-        self.__get_term_list(query_string)
+
+        self.__get_tf(self.__get_term_list(query_string))
+
 
     def __get_term_list (self, query_string):
         term_list = preprocess(word_tokenize(query_string))
@@ -890,7 +892,8 @@ def handle_query(query_line, legit_relevant_docs):
                     relevant_docs = docs
                 else:
                     relevant_docs = two_way_merge(docs, relevant_docs)
-        relevant_docs = list(map(lambda x: x[1], relevant_docs))
+        relevant_docs = list(map(lambda x: x[0], relevant_docs))
+        relevant_docs = ranked_retrieval_boolean(relevant_docs, query)
     else:
         relevant_docs = list(map(lambda x: x[1], synset_expansion(query, search)))
         if ROCCHIO_EXPANSION:
@@ -898,6 +901,7 @@ def handle_query(query_line, legit_relevant_docs):
                 relevant_docs = rocchio_expansion(query, relevant_docs, None)
             else:
                 relevant_docs = rocchio_expansion(query, None, legit_relevant_docs)
+
 
 
     return relevant_docs
