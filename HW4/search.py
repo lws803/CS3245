@@ -71,7 +71,7 @@ def get_adjusted_tf(docs, synset, expanded_query, backend):
                 except IndexError:
                     pass
     terms = list(set(preprocess(expanded_query.split())))
-    print terms
+    # print terms
     doc_tfs = {}
     for term in terms:
         for doc, tf in backend.get_tf(term, sorted(docs)).items():
@@ -84,7 +84,7 @@ def get_adjusted_tf(docs, synset, expanded_query, backend):
                     else:
                         doc_tfs[doc][inv_synset[term]] += tf
                 except:
-                    print "Warning can't find term in invsynset"+term
+                    print "Warning can't find term in invsynset"
                     pass
 
     for doc in doc_tfs:
@@ -127,7 +127,7 @@ def rank_documents(doc_vectors, query_vector, backend):
     for doc in doc_vectors:
         # get dot product
         dot_product = 0
-        print doc_vectors[doc], q_vec
+        # print doc_vectors[doc], q_vec
         for word in doc_vectors[doc]:
             if word in q_vec:
                 dot_product += doc_vectors[doc][word]*q_vec[word]*backend.get_idf(word)
@@ -338,7 +338,7 @@ class Query:
         """
         for term in new_terms:                
             self.tf_q[term] = 1 # Add them as one
-            print "accepted:", term
+            print "accepted"
             self.query_line += " " + term
 
 
@@ -850,7 +850,7 @@ def rocchio_expansion (query, relevant_docs, legit_relevant_docs):
             accepted_terms.append(term)
 
     query.add_suggestions(accepted_terms)
-    print query.query_line
+    # print query.query_line
 
     relevant_docs = legit_relevant_docs
     ranked_list = ranked_retrieval(query, query.query_line)
@@ -869,9 +869,9 @@ def handle_query(query_line, legit_relevant_docs):
     :param query:
     :return:
     """
-    print query_line
+    # print query_line
     query = Query(query_line)
-    print query.processed_queries
+    # print query.processed_queries
     relevant_docs = []
 
     if query.is_boolean:
