@@ -882,7 +882,7 @@ def handle_query(query_line, legit_relevant_docs):
     # print query.processed_queries
     relevant_docs = []
     is_boolean = len(query.processed_queries) > 1 or (len(query.processed_queries) > 0 and query.processed_queries[0]["type"] == "phrase_query")
-
+    print is_boolean
     if is_boolean:
         for q in query.processed_queries:
             words = preprocess(word_tokenize(q["text"]))
@@ -893,7 +893,7 @@ def handle_query(query_line, legit_relevant_docs):
                 else:
                     relevant_docs = two_way_merge(docs, relevant_docs)
         relevant_docs = list(map(lambda x: x[0], relevant_docs))
-        relevant_docs = ranked_retrieval_boolean(relevant_docs, query)
+        relevant_docs = list(map(lambda x: x[1],ranked_retrieval_boolean(relevant_docs, query)))
     else:
         relevant_docs = list(map(lambda x: x[1], synset_expansion(query, search)))
         if ROCCHIO_EXPANSION:
@@ -901,8 +901,6 @@ def handle_query(query_line, legit_relevant_docs):
                 relevant_docs = rocchio_expansion(query, relevant_docs, None)
             else:
                 relevant_docs = rocchio_expansion(query, None, legit_relevant_docs)
-
-
 
     return relevant_docs
 
