@@ -15,7 +15,7 @@ import sys
 import re
 from math import log
 
-LIMIT = 100
+LIMIT = 0
 COUNT = 0
 STEMMER = PorterStemmer()
 
@@ -25,7 +25,7 @@ def preprocess_title(titles):
     Remove court name, since it is present in court zone.
     '''
     titles = [t for t in titles if len(t) > 1]
-    titles = [t for t in titles if not is_num(t)]
+    # titles = [t for t in titles if not is_num(t)]
     titles = [t.lower() for t in titles]
     titles = split(titles)
     titles = [str(clean(w)) for w in titles]
@@ -36,7 +36,7 @@ def preprocess(data):
     '''
     Clean data for content before tokenizing
     '''
-    data = [w for w in data if not is_num(w) and w not in string.punctuation]
+    data = [w for w in data if w not in string.punctuation]
     data = split(data)
     data = [str(clean(w)) for w in data]
     data = [w for w in data if not has_weird_chars(w)]
@@ -64,7 +64,8 @@ def clean(original_word):
     '''
     Remove digits, punctuation, unicode chars in words
     '''
-    word = re.sub("\\d", "", original_word)
+    # word = re.sub("\\d", "", original_word)
+    word = original_word
     word = word.encode('utf-8', 'ignore')
     return word.lower()
 
