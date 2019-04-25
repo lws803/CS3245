@@ -4,20 +4,21 @@
 1. Unigram model - bag of words, can be used for language identification
 2. Ngram model - allow for phrase queries
 
-
 ### Boolean retrieval
 1. Merge algorithm
 
 ### Postings list
 1. Skip list
 2. Positional index in postings list
+3. Biword indexes - not as feasible as positional indexes
 
 ### Tolerant retrieval
 #### Wildcard querying
 1. Bigram indexes
-2. Search prefix trees
+2. Permuterm indexes
+3. Search prefix trees
 #### Spelling correction
-1. Edit distance
+1. Edit distance/ weighted edit distance
 2. Jaccard distance
 3. Ngram overlap
 4. Hit based spelling correction
@@ -26,6 +27,9 @@
 ### Index construction
 1. BSBI
 2. SPIMI
+3. Distributed indexing
+4. Dynamic indexing
+    - Logarithmic merge
 
 ### Index compression
 1. Dictionary as a string
