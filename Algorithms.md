@@ -68,7 +68,9 @@
 2. Thesaurus generation
 
 ### XML retrieval
-1. SimNoMerge - find context resemblance
+1. Context resemblance score 
+2. SimNoMerge
+3. INEX relevance assessment
 
 ### Probabilistic model
 1. Okapi BM25

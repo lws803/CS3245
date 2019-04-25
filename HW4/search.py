@@ -50,6 +50,50 @@ _stopwords = stopwords.words('english') + [
 
 _spaces = ["\n", "", " "]
 
+def parse_query(query_string):
+    parsed_query = []
+    STATE = "EXPECT-QUOTE"
+    buff = ""
+    tmp = ""
+    for c in query_string:
+        if STATE == "EXPECT-QUOTE" and c == "\"":
+            STATE = "PHRASE-QUERY"
+        elif STATE == "EXPECT-QUOTE":
+            buff += c
+            STATE = "FREE-TEXT"
+        elif STATE == "PHRASE-QUERY" and c == "\"":
+            parsed_query.append({"text":str(buff), "type":"phrase_query"})
+            STATE = "EXPECT_AND"
+        elif STATE == "PHRASE-QUERY":
+            buff +=c
+        elif STATE == "FREE-TEXT":
+            buff += c
+            if buff[-5:] == " AND ":
+                parsed_query.append({"text":str(buff[:-5]), "type": "free-text"})
+                buff = ""
+                STATE = "EXPECT-QUOTE"
+        elif STATE == "EXPECT_AND":
+            tmp += c
+            if tmp[-5:] == " AND ":
+                parsed_query[-1]["text"] += tmp[:-5]
+                buff = ""
+                STATE = "EXPECT-QUOTE"
+                tmp = ""
+        else:
+            raise Exception
+
+    if STATE == "FREE-TEXT":
+        parsed_query.append({"text":buff, "type": "free-text"})
+    elif STATE != "EXPECT_AND":
+        raise Exception
+    else:
+        if tmp != "":
+            if len(parsed_query) > 0:
+                parsed_query[-1]["text"] += tmp
+                parsed_query[-1]["type"] = "free-text"
+
+    return parsed_query
+
 # -- Synset  --
 
 def get_adjusted_tf(docs, synset, expanded_query, backend):
@@ -65,10 +109,12 @@ def get_adjusted_tf(docs, synset, expanded_query, backend):
     inv_synset = {}
     for word in synset:
         for d in synset[word]:
+            print preprocess([d]), d
             for w in preprocess([d]):
                 try:
                     inv_synset[w] = preprocess([word])[0]
                 except IndexError:
+                    print "Error adding ",w,preprocess([word])
                     pass
     terms = list(set(preprocess(expanded_query.split())))
     # print terms
@@ -83,9 +129,10 @@ def get_adjusted_tf(docs, synset, expanded_query, backend):
                         doc_tfs[doc][inv_synset[term]] = tf
                     else:
                         doc_tfs[doc][inv_synset[term]] += tf
-                except:
-                    print "Warning can't find term in invsynset"
+                except KeyError:
                     pass
+                    #print "Warning can't find term in invsynset "+term
+                    #print inv_synset
 
     for doc in doc_tfs:
         doc_tfs[doc] = log_vector(doc_tfs[doc])
@@ -132,7 +179,7 @@ def rank_documents(doc_vectors, query_vector, backend):
             if word in q_vec:
                 dot_product += doc_vectors[doc][word]*q_vec[word]*backend.get_idf(word)
         dot_product /= backend.get_document_length(doc)
-        dot_product /= query_norm(q_vec)
+        dot_product /= query_norm(q_vec)+1e-9
         results.append((-dot_product, doc))
     return sorted(results)
 
@@ -203,6 +250,7 @@ def preprocess(data):
     '''
     Clean data for content before tokenizing
     '''
+
     data = [w for w in data if w not in string.punctuation]
     data = split(data)
     data = [str(clean(w)) for w in data]
@@ -260,48 +308,20 @@ class Query:
         self.tf_q = {}
         self.processed_queries = None
         self.synonyms = {}
-        self.is_boolean, self.processed_queries = self.__identify_query(chomp(query))
+        self.__identify_query(chomp(query))
 
     def __identify_query(self, query_string):
         """
         identify the query type and process the queries
-        """        
-        if ("AND" in query_string or (query_string[0] == '"' and query_string[-1] == '"')):
-            # Consider as list of queries
-            # Pre process if need be
-            out = []
-            split_word = query_string.split(' ')
-            
-            i = 0
-            while (i < len(split_word)):
-                if (split_word[i][0] == '"'):
-                    combined = []
-                    d = i
-                    while (d < len(split_word)-1):
-                        combined.append(split_word[d].replace('"', ''))
-                        d += 1
-                        if split_word[d][-1] == '"':
-                            i = d + 1
-                            combined.append(split_word[d].replace('"', ''))
-                            break
-                    preprocessed = preprocess(combined)
-                    if len(preprocessed) > 0:
-                        out.append(preprocessed)
-                else:
-                    if (split_word[i] != "AND"):
-                        preprocessed = preprocess([split_word[i]])
-                        if len(preprocessed) > 0:
-                            out.append(preprocessed)
-                    i += 1
+        """
+        try:
+            self.processed_queries = parse_query(query_string)
+        except:
+            self.processed_queries = [{"text": query_string, "type":"free-text"}]
+            print "failed to parse correctly defaulting to free text"
 
-            # Flattens the out list so we can get a tf_q
-            flat_term_list = [item for sublist in out for item in sublist]
-            self.__get_tf(flat_term_list)
-            return True, out
-        else:
-            # pre process as per normal
-            self.__get_tf(self.__get_term_list(query_string))
-            return False, query_string
+        self.__get_tf(self.__get_term_list(query_string))
+
 
     def __get_term_list (self, query_string):
         term_list = preprocess(word_tokenize(query_string))
@@ -661,7 +681,7 @@ class SearchBackend:
     def get_tf(self, term, documents):
         """
         Returns TF of term in document list
-        :param term: term after preprocessing to be looked up
+        :param term: term after pre-processing to be looked up
         :param documents: A sorted list of doc ids
         :return: dict containing the tf of document {<doc_id>: <tf>}
         """
@@ -870,51 +890,37 @@ def handle_query(query_line, legit_relevant_docs):
     :return:
     """
     # print query_line
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+    query_line = re.sub('[^\x00-\x7F]+', " ", query_line)
     query = Query(query_line)
     # print query.processed_queries
     relevant_docs = []
-
-    if query.is_boolean:
-        for subquery in query.processed_queries:
-            if len(subquery) > 1:
+    is_boolean = len(query.processed_queries) > 1 or (len(query.processed_queries) > 0 and query.processed_queries[0]["type"] == "phrase_query")
+    print query.processed_queries
+    print is_boolean
+    if is_boolean:
+        for q in query.processed_queries:
+            words = preprocess(word_tokenize(q["text"]))
+            print words
+            if len(words) > 0:
+                docs = search.phrase_query(words)
                 if len(relevant_docs) == 0:
-                    relevant_docs = search.phrase_query(subquery)
-                relevant_docs = two_way_merge(relevant_docs, search.phrase_query(subquery))
-            else:
-                if len(relevant_docs) == 0:
-                    relevant_docs = deduplicate_results(search.free_text_query(subquery[0]))
-                relevant_docs = two_way_merge(relevant_docs, deduplicate_results(search.free_text_query(subquery[0])))
-        flattened_docs = set([])
-        for doc in relevant_docs:
-            flattened_docs.add(doc[0])
-
-        relevant_docs = legit_relevant_docs
-        for doc in ranked_retrieval_boolean(list(flattened_docs), query):
-            # Handle duplicates
-            if doc[1] not in legit_relevant_docs:
-                # print doc[1], -doc[0]
-                relevant_docs.append(doc[1])
+                    relevant_docs = docs
+                else:
+                    relevant_docs = two_way_merge(docs, relevant_docs)
+        relevant_docs = list(map(lambda x: x[0], relevant_docs))
+        relevant_docs = list(map(lambda x: x[1], ranked_retrieval_boolean(relevant_docs, query)))
     else:
-
-        ranked_list = ranked_retrieval(query, query.query_line)
-        relevant_docs = legit_relevant_docs
-        
-        for doc in ranked_list:
-            if doc[1] not in legit_relevant_docs:
-                # print doc[1], -doc[0]
-                relevant_docs.append(doc[1])
-
-        if THESAURUS_ENABLED:
-            relevant_docs = list(map(lambda x: x[1], synset_expansion(query, search)))
+        relevant_docs = list(map(lambda x: x[1], synset_expansion(query, search)))
         if ROCCHIO_EXPANSION:
             if PSEUDO_RELEVANCE_FEEDBACK:
                 relevant_docs = rocchio_expansion(query, relevant_docs, None)
             else:
                 relevant_docs = rocchio_expansion(query, None, legit_relevant_docs)
 
-
-
     return relevant_docs
+
 
 def usage():
     print ("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
