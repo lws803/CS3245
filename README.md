@@ -1,4 +1,4 @@
-# Topics for IR
+## Topics for IR
 
 1. Language models
 2. Boolean retrieval
